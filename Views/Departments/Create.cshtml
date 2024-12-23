@@ -1,0 +1,33 @@
+﻿@model Web_DonNghiPhep.Models.Department
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Tạo mới phòng ban</h1>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Department_id" class="control-label"></label>
+                <input asp-for="Department_id" class="form-control" />
+                <span asp-validation-for="Department_id" class="text-danger"></span>
+            </div>
+            <div class="form-group my-2">
+                <label asp-for="DepartmentName" class="control-label"></label>
+                <input asp-for="DepartmentName" class="form-control" />
+                <span asp-validation-for="DepartmentName" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <input type="submit" value="Tạo mới" class="btn btn-primary" />
+                <a class="btn btn-secondary" asp-action="Index">Trở lại</a>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+

@@ -1,3 +1,7 @@
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
+using Web_DonNghiPhep.Data;
+
 namespace Web_DonNghiPhep
 {
     public class Program
@@ -8,6 +12,29 @@ namespace Web_DonNghiPhep
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+
+            builder.Services.AddDbContext<MyDBContext>(option =>
+            {
+                option.UseSqlServer(builder.Configuration.GetConnectionString("MyDB"));
+            });
+
+            builder.Services.AddDistributedMemoryCache();
+
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromSeconds(1800);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+
+
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+              .AddCookie(options =>
+              {
+                  options.LoginPath = "/dang-nhap";  
+                  options.LogoutPath = "/dang-xuat"; 
+                  options.AccessDeniedPath = "/AccessDenied";
+              });
 
             var app = builder.Build();
 
@@ -21,9 +48,12 @@ namespace Web_DonNghiPhep
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+            app.UseSession();
 
             app.UseRouting();
 
+
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllerRoute(

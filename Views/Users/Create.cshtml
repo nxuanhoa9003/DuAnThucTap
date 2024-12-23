@@ -1,0 +1,75 @@
+﻿@model Web_DonNghiPhep.ViewModels.EmployeeVM;
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+
+<h2>Tạo tài khoản mới</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create" asp-controller="Users">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Employee_ID" class="control-label"></label>
+                <input asp-for="Employee_ID" class="form-control" />
+                <span asp-validation-for="Employee_ID" class="text-danger"></span>
+            </div>
+            <div class="form-group my-2">
+                <label asp-for="UserName" class="control-label"></label>
+                <input asp-for="UserName" class="form-control" />
+                <span asp-validation-for="UserName" class="text-danger"></span>
+            </div>
+            <div class="form-group my-2">
+                <label asp-for="Password" class="control-label"></label>
+                <input asp-for="Password" class="form-control" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FullName" class="control-label"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="form-group my-2">
+                <label asp-for="Title_id" class="control-label"></label>
+                <select asp-for="Title_id" class="form-control" asp-items="ViewBag.Title_ID"></select>
+            </div>
+            <div class="form-group my-2">
+                <label asp-for="Department_id" class="control-label"></label>
+                <select asp-for="Department_id" class="form-control" asp-items="ViewBag.Department_ID"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="Dob" class="control-label"></label>
+                <input asp-for="Dob" class="form-control" />
+                <span asp-validation-for="Dob" class="text-danger"></span>
+            </div>
+            <div class="form-group my-2">
+                <label asp-for="PhoneNumber" class="control-label"></label>
+                <input asp-for="PhoneNumber" class="form-control" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group my-2">
+                <label asp-for="Role_IDs" class="control-label"></label>
+                <select asp-for="Role_IDs" class ="form-control" asp-items="ViewBag.Role_ID" multiple></select>
+                <span asp-validation-for="Role_IDs" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="Status" /> @Html.DisplayNameFor(model => model.Status)
+                </label>
+            </div>
+            <div class="form-group my-2">
+                <input type="submit" value="Tạo" class="btn btn-primary" />
+                <a class="btn btn-secondary" asp-action="Index">Trở lại</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+
