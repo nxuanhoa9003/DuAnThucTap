@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using Web_DonNghiPhep.Models;
 
 namespace Web_DonNghiPhep.Controllers
 {
+    
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
@@ -13,6 +15,7 @@ namespace Web_DonNghiPhep.Controllers
             _logger = logger;
         }
 
+        [Authorize]
         public IActionResult Index()
         {
             return View();
@@ -21,6 +24,12 @@ namespace Web_DonNghiPhep.Controllers
         public IActionResult Privacy()
         {
             return View();
+        }
+
+        [HttpGet("/AccessDenied")]
+        public IActionResult AccessDenied()
+        {
+            return View("_AccessDenied");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

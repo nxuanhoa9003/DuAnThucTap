@@ -1,0 +1,77 @@
+﻿@model IEnumerable<Web_DonNghiPhep.Models.User>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h3>Tài khoản</h3>
+
+<p>
+    <a class="btn btn-primary" asp-action="Create">Thêm mới</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Employee_ID)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmployeeUs.FullName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UserName)
+            </th>
+            <th class="text-center">
+                @Html.DisplayNameFor(model => model.Status)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmployeeUs.Department.DepartmentName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmployeeUs.Title.Title_name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UserRoles)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <th>
+                    @Html.DisplayFor(modelItem => item.Employee_ID)
+                </th>
+                <td>
+                    @Html.DisplayFor(modelItem => item.EmployeeUs.FullName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.UserName)
+                </td>
+
+                <td class="text-center">
+                    @{
+                        var statusClass = item.Status ? "bg-success" : "bg-danger";
+                        var statusText = item.Status ? "Active" : "Lock";
+                    }
+                    <span class="badge @statusClass">@statusText</span>
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.EmployeeUs.Department.DepartmentName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.EmployeeUs.Title.Title_name)
+                </td>
+                <td>
+                   @string.Join(",", item.UserRoles.Select(x => x.Role.Role_Name).ToList())
+                </td>
+                <td>
+                    <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.Employee_ID">Sửa</a>
+                    <a class="btn btn-info" asp-action="Details" asp-route-id="@item.Employee_ID">Chi tiết</a>
+                    <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Employee_ID">Xoá</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

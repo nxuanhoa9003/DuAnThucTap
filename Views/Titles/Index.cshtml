@@ -1,0 +1,35 @@
+﻿@model IEnumerable<Web_DonNghiPhep.Models.Titles>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h3>Chức danh</h3>
+
+<p>
+    <a class="btn btn-primary" asp-action="Create">Tạo mới</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Title_name)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Title_name)
+            </td>
+            <td>
+                <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.Title_id">Sửa</a>
+                 
+                <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Title_id">Xoá</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
