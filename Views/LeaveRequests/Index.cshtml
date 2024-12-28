@@ -1,0 +1,67 @@
+﻿@model IEnumerable<Web_DonNghiPhep.Models.LeaveRequest>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<style>
+    .text-ellipsis {
+        display: inline-block; 
+        max-width: 100px; 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+    }
+</style>
+
+<h1>Đơn xin nghỉ phép</h1>
+
+<p>
+    <a class="btn btn-primary" asp-action="CreateLeaveRequest">Tạo đơn mới</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th style="width: 15%;">
+                @Html.DisplayNameFor(model => model.StartDate)
+            </th>
+            <th style="width: 10%;">
+                @Html.DisplayNameFor(model => model.EndDate)
+            </th>
+            <th style="width: 25%;">
+                @Html.DisplayNameFor(model => model.Reason)
+            </th>
+            <th class="text-center" style="width: 15%;">
+                @Html.DisplayNameFor(model => model.Status)
+            </th>
+            <th style="width: 25%;">
+                @Html.DisplayNameFor(model => model.ApprovedBy)
+            </th>
+            <th style="width: 10%;"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.StartDate)</td>
+                <td>@Html.DisplayFor(modelItem => item.EndDate)</td>
+                <td>
+                    <span class="text-ellipsis">@Html.DisplayFor(modelItem => item.Reason)</span>
+                </td>
+                <td class="text-center">
+                    @{
+                        var status = item.Status;
+                        var clasbage = string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase) ? "warning" : status == "Approved" ? "success" : "Rejected";
+                    }
+                    <span class="badge bg-@clasbage text-ellipsis">@status</span>
+                </td>
+                <td>@Html.DisplayFor(modelItem => item.ApprovedBy.FullName)</td>
+                <td>
+                    <a class="btn btn-info" asp-action="Details" asp-route-id="@item.Id">Chi tiết</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+

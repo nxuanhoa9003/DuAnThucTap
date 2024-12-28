@@ -16,6 +16,9 @@ namespace Web_DonNghiPhep.ViewModels
         [Display(Name = "Trưởng phòng")]
         public string? Manager { get; set; }
 
+        [Display(Name = "Phòng ban cấp trên")]
+        public string? Parent { get; set; } = null;
+
         [DataType(DataType.Date)]
         [Display(Name = "Ngày tạo")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;

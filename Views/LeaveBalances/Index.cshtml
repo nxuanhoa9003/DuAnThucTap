@@ -1,0 +1,83 @@
+﻿@model IEnumerable<Web_DonNghiPhep.Models.LeaveBalance>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h4>Cấu hình ngày nghỉ</h4>
+
+@if (Model.Any())
+{
+    <p>
+        <a class="btn btn-primary" asp-action="Create">Thiết lập mới</a>
+    </p>
+
+    <div class="form-group col-md-4">
+        <form asp-action="Index" asp-controller="LeaveBalances">
+            <label for="Year">Năm</label>
+            <div class="d-flex gap-3">
+                 <select name="yearselect" asp-items="@(new SelectList(ViewBag.Years, ViewBag.SelectedYear))" class="form-control">
+                    <option value="">-- Chọn năm --</option>
+                </select>
+                <input value="Lọc" class="btn btn-info"  type="submit" />
+            </div>
+        </form>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Year)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Employee.FullName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.TotalDays)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.UsedDays)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.RemainingDays)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.UpdatedAt)
+                </th>
+
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Year)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Employee.FullName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.TotalDays)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.UsedDays)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.RemainingDays)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.UpdatedAt)
+                    </td>
+                    <td>
+                        <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.Id">Sửa</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+

@@ -10,7 +10,7 @@ namespace Web_DonNghiPhep.Models
         [Key]
         [DisplayName("Mã nhân viên")]
         [StringLength(20, MinimumLength = 5)]
-        public string Employee_ID { get; set; }
+        public string? Employee_ID { get; set; }
 
         [Required]
         [DisplayName("Họ và tên")]
@@ -31,20 +31,16 @@ namespace Web_DonNghiPhep.Models
         [Phone]
         public string? PhoneNumber { get; set; }
 
-        // Khóa ngoại tới Department (Phòng ban)
-        [DisplayName("Phòng ban")]
-        public string? Department_id { get; set; }
-
         [DisplayName("Chức vụ")]
         public string? Title_id { get; set; }
 
-        [DisplayName("Phòng ban")]
-        public virtual Department Department { get; set; }
         [DisplayName("Chức danh")]
         public virtual Titles Title { get; set; }
         public virtual User User { get; set; }
         public virtual ICollection<LeaveRequest> LeaveRequests { get; set; }
         public virtual ICollection<LeaveBalance> LeaveBalances { get; set; }
+        public virtual ICollection<LeaveRequest> ApprovedLeaveRequests { get; set; }
+        public virtual ICollection<DepartmentEmployee> DepartmentEmployees { get; set; } = new List<DepartmentEmployee>();
     }
 
 }

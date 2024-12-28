@@ -34,18 +34,29 @@ namespace Web_DonNghiPhep.Data
                 .HasForeignKey<User>(u => u.Employee_ID)
                 .OnDelete(DeleteBehavior.Cascade);  // Xóa User nếu Employee bị xóa
 
-
-            modelBuilder.Entity<Employee>()
-                .HasOne(e => e.Department)
-                .WithMany(d => d.Employees)
-                .HasForeignKey(e => e.Department_id)
-                .OnDelete(DeleteBehavior.SetNull);
-        
             modelBuilder.Entity<Employee>()
                 .HasOne(e => e.Title)
                 .WithMany(t => t.Employees)
                 .HasForeignKey(e => e.Title_id)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Department>()
+                    .HasOne(d => d.Parent)
+                    .WithMany(d => d.SubDepartments)
+                    .HasForeignKey(d => d.ParentId);
+
+            modelBuilder.Entity<DepartmentEmployee>()
+                    .HasKey(de => new { de.DepartmentId, de.EmployeeId });
+
+            modelBuilder.Entity<DepartmentEmployee>()
+                .HasOne(de => de.Department)
+                .WithMany(d => d.DepartmentEmployees)
+                .HasForeignKey(de => de.DepartmentId);
+
+            modelBuilder.Entity<DepartmentEmployee>()
+                .HasOne(de => de.Employee)
+                .WithMany(e => e.DepartmentEmployees)
+                .HasForeignKey(de => de.EmployeeId);
 
             modelBuilder.Entity<Log>()
                 .HasOne(l => l.User)
@@ -65,6 +76,22 @@ namespace Web_DonNghiPhep.Data
                 .HasForeignKey(lr => lr.Employee_id)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<LeaveRequest>()
+               .HasOne(lr => lr.ApprovedBy)
+               .WithMany(e => e.ApprovedLeaveRequests)
+               .HasForeignKey(lr => lr.ApprovedById);
+
+            modelBuilder.Entity<LeaveRequest>()
+               .HasOne(lr => lr.NextApprover)
+               .WithMany()
+               .HasForeignKey(lr => lr.NextApproverId);
+
+            modelBuilder.Entity<LeaveRequest>()
+                .HasOne(lr => lr.Department)
+                .WithMany()
+                .HasForeignKey(lr => lr.DepartmentId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             base.OnModelCreating(modelBuilder);
 
         }
@@ -80,6 +107,7 @@ namespace Web_DonNghiPhep.Data
         public DbSet<UserRole> UserRole { get; set; }
         public DbSet<Titles> Title { get; set; }
         public DbSet<Department> Department { get; set; }
+        public DbSet<DepartmentEmployee> DepartmentEmployee { get; set; }
         public DbSet<LeaveBalance> LeaveBalance { get; set; }
         public DbSet<LeaveRequest> LeaveRequest { get; set; }
         public DbSet<Log> Log { get; set; }

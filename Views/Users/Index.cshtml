@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Web_DonNghiPhep.Models.User>
+﻿@model IEnumerable<Web_DonNghiPhep.ViewModels.EmployeeVM>
 
 @{
     ViewData["Title"] = "Index";
@@ -16,7 +16,7 @@
                 @Html.DisplayNameFor(model => model.Employee_ID)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.EmployeeUs.FullName)
+                @Html.DisplayNameFor(model => model.FullName)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.UserName)
@@ -25,13 +25,13 @@
                 @Html.DisplayNameFor(model => model.Status)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.EmployeeUs.Department.DepartmentName)
+                @Html.DisplayNameFor(model => model.Department_name)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.EmployeeUs.Title.Title_name)
+                @Html.DisplayNameFor(model => model.Title_name)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.UserRoles)
+                @Html.DisplayNameFor(model => model.Roles_Name)
             </th>
             <th></th>
         </tr>
@@ -44,7 +44,7 @@
                     @Html.DisplayFor(modelItem => item.Employee_ID)
                 </th>
                 <td>
-                    @Html.DisplayFor(modelItem => item.EmployeeUs.FullName)
+                    @Html.DisplayFor(modelItem => item.FullName)
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.UserName)
@@ -58,13 +58,13 @@
                     <span class="badge @statusClass">@statusText</span>
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.EmployeeUs.Department.DepartmentName)
+                    @Html.DisplayFor(modelItem => item.Department_name)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.EmployeeUs.Title.Title_name)
+                    @Html.DisplayFor(modelItem => item.Title_name)
                 </td>
                 <td>
-                   @string.Join(",", item.UserRoles.Select(x => x.Role.Role_Name).ToList())
+                    @string.Join(",", item.Roles_Name)
                 </td>
                 <td>
                     <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.Employee_ID">Sửa</a>

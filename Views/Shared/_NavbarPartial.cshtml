@@ -10,9 +10,9 @@
             <ul class="navbar-nav flex-grow-1">
                 @if (User.Identity?.IsAuthenticated ?? false)
                 {
-                    var role = User.FindFirst(ClaimTypes.Role)?.Value;
+                    var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
 
-                    if (role.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                    if (roles.Contains("admin"))
                     {
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Users" asp-action="Index">Quản lý tài khoản</a>
@@ -24,13 +24,24 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Titles" asp-action="Index">Quản lý chức danh</a>
                         </li>
                     }
+
+                    if (roles.Contains("nhân viên"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="LeaveRequests" asp-action="Index">Đơn đã gửi</a>
+                        </li> 
+                    }
+                    if (roles.Contains("quản lý"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="LeaveRequests" asp-action="ApproveRequests">Xét duyệt đơn</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="LeaveBalances" asp-action="Index">Cấu hình ngày nghỉ</a>
+                        </li>
+                    }
                 }
-                 @* <li class="nav-item">
-                     <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                 </li>
-                 <li class="nav-item">
-                     <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                 </li> *@
+
 
             </ul>
 
