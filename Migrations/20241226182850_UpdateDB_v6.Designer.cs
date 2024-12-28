@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Web_DonNghiPhep.Data;
 
@@ -11,9 +12,11 @@ using Web_DonNghiPhep.Data;
 namespace Web_DonNghiPhep.Migrations
 {
     [DbContext(typeof(MyDBContext))]
-    partial class MyDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241226182850_UpdateDB_v6")]
+    partial class UpdateDB_v6
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,9 +61,6 @@ namespace Web_DonNghiPhep.Migrations
 
                     b.Property<string>("EmployeeId")
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<bool>("EmployeeIsManager")
-                        .HasColumnType("bit");
 
                     b.HasKey("DepartmentId", "EmployeeId");
 
@@ -147,14 +147,11 @@ namespace Web_DonNghiPhep.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ApprovedById")
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("DepartmentId")
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Employee_id")
                         .IsRequired()
@@ -162,9 +159,6 @@ namespace Web_DonNghiPhep.Migrations
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("NextApproverId")
-                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Reason")
                         .IsRequired()
@@ -184,13 +178,7 @@ namespace Web_DonNghiPhep.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApprovedById");
-
-                    b.HasIndex("DepartmentId");
-
                     b.HasIndex("Employee_id");
-
-                    b.HasIndex("NextApproverId");
 
                     b.ToTable("LeaveRequest");
                 });
@@ -307,7 +295,7 @@ namespace Web_DonNghiPhep.Migrations
             modelBuilder.Entity("Web_DonNghiPhep.Models.Department", b =>
                 {
                     b.HasOne("Web_DonNghiPhep.Models.Department", "Parent")
-                        .WithMany("SubDepartments")
+                        .WithMany()
                         .HasForeignKey("ParentId");
 
                     b.Navigation("Parent");
@@ -335,7 +323,7 @@ namespace Web_DonNghiPhep.Migrations
             modelBuilder.Entity("Web_DonNghiPhep.Models.Employee", b =>
                 {
                     b.HasOne("Web_DonNghiPhep.Models.Department", "Department")
-                        .WithMany()
+                        .WithMany("Employees")
                         .HasForeignKey("Department_id");
 
                     b.HasOne("Web_DonNghiPhep.Models.Titles", "Title")
@@ -360,31 +348,13 @@ namespace Web_DonNghiPhep.Migrations
 
             modelBuilder.Entity("Web_DonNghiPhep.Models.LeaveRequest", b =>
                 {
-                    b.HasOne("Web_DonNghiPhep.Models.Employee", "ApprovedBy")
-                        .WithMany("ApprovedLeaveRequests")
-                        .HasForeignKey("ApprovedById");
-
-                    b.HasOne("Web_DonNghiPhep.Models.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId");
-
                     b.HasOne("Web_DonNghiPhep.Models.Employee", "Employee")
                         .WithMany("LeaveRequests")
                         .HasForeignKey("Employee_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Web_DonNghiPhep.Models.Employee", "NextApprover")
-                        .WithMany()
-                        .HasForeignKey("NextApproverId");
-
-                    b.Navigation("ApprovedBy");
-
-                    b.Navigation("Department");
-
                     b.Navigation("Employee");
-
-                    b.Navigation("NextApprover");
                 });
 
             modelBuilder.Entity("Web_DonNghiPhep.Models.Log", b =>
@@ -431,13 +401,11 @@ namespace Web_DonNghiPhep.Migrations
                 {
                     b.Navigation("DepartmentEmployees");
 
-                    b.Navigation("SubDepartments");
+                    b.Navigation("Employees");
                 });
 
             modelBuilder.Entity("Web_DonNghiPhep.Models.Employee", b =>
                 {
-                    b.Navigation("ApprovedLeaveRequests");
-
                     b.Navigation("DepartmentEmployees");
 
                     b.Navigation("LeaveBalances");

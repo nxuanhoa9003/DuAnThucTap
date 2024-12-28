@@ -1,4 +1,4 @@
-﻿@model Web_DonNghiPhep.Models.User;
+﻿@model Web_DonNghiPhep.ViewModels.EmployeeVM;
 
 @{
     ViewData["Title"] = "Details";
@@ -11,10 +11,16 @@
     <hr />
     <dl class="row">
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EmployeeUs.FullName)
+            @Html.DisplayNameFor(model => model.FullName)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EmployeeUs.FullName)
+            @Html.DisplayFor(model => model.FullName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Dob)
+        </dt>
+        <dd class="col-sm-10">
+            @Model.Dob.Value.ToString("dd/MM/yyyy")
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.UserName)
@@ -30,16 +36,16 @@
         </dd>
 
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EmployeeUs.Department)
+            @Html.DisplayNameFor(model => model.Department_name)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EmployeeUs.Department.DepartmentName)
+            @Html.DisplayFor(model => model.Department_name)
         </dd>
         <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.EmployeeUs.Title)
+            @Html.DisplayNameFor(model => model.Title_name)
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.EmployeeUs.Title.Title_name)
+            @Html.DisplayFor(model => model.Title_name)
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.Status)
@@ -64,10 +70,10 @@
             @Html.DisplayFor(model => model.updated_at)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UserRoles)
+            @Html.DisplayNameFor(model => model.Roles_Name)
         </dt>
         <dd class = "col-sm-10">
-            @string.Join(",", Model.UserRoles.Select(x => x.Role.Role_Name).ToList())
+            @string.Join(",", Model.Roles_Name)
         </dd>
     </dl>
 </div>

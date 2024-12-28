@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Web_DonNghiPhep.Data;
 using Web_DonNghiPhep.Models;
+using Web_DonNghiPhep.Services;
 using Web_DonNghiPhep.ViewModels;
 
 namespace Web_DonNghiPhep.Controllers
@@ -18,20 +19,12 @@ namespace Web_DonNghiPhep.Controllers
     public class UsersController : Controller
     {
         private readonly MyDBContext _context;
-
-        public UsersController(MyDBContext context)
+        private readonly IMessageService _messageService;
+        public UsersController(MyDBContext context, IMessageService messageService)
         {
             _context = context;
+            _messageService = messageService;
         }
-
-
-        public string? message { get; set; }
-
-        public void SetMessage(string message, string type = "success")
-        {
-            TempData[type] = message;
-        }
-
 
         [HttpGet("/dang-nhap/")]
         [AllowAnonymous]
@@ -65,7 +58,7 @@ namespace Web_DonNghiPhep.Controllers
                                 .SingleOrDefaultAsync(x => x.UserName.Equals(uservm.UserName) && x.Password.Equals(uservm.Password));
             if (user == null)
             {
-                SetMessage("Đăng nhập thất bại", "error");
+                _messageService.SetMessage("Đăng nhập thất bại", "error");
                 return View();
             }
             else
@@ -74,6 +67,7 @@ namespace Web_DonNghiPhep.Controllers
                 {
                     var claims = new List<Claim>
                      {
+                        new Claim("Employeeid", user.Employee_ID),
                          new Claim("FullName", user.EmployeeUs.FullName)
                      };
 
@@ -89,7 +83,7 @@ namespace Web_DonNghiPhep.Controllers
                     // Cập nhật HttpContext.User để kiểm tra ngay trong request
                     HttpContext.User = new ClaimsPrincipal(claimsIdentity);
 
-                    SetMessage("Đăng nhập thành công");
+                    _messageService.SetMessage("Đăng nhập thành công");
 
                     if (User.IsInRole("admin"))
                     {
@@ -97,11 +91,12 @@ namespace Web_DonNghiPhep.Controllers
                     }
                     else
                     {
-                        return RedirectToAction("Index", "Home");
+                        return RedirectToAction("Index", "LeaveRequests");
                     }
-                }else
+                }
+                else
                 {
-                    SetMessage("Tài khoản của bạn bị khoá", "warning");
+                    _messageService.SetMessage("Tài khoản của bạn bị khoá", "warning");
                     return RedirectToAction("login");
                 }
 
@@ -109,7 +104,7 @@ namespace Web_DonNghiPhep.Controllers
         }
 
         [HttpPost("/dang-xuat")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> Logout()
         {
             // Đăng xuất người dùng và xóa cookie xác thực
@@ -122,13 +117,27 @@ namespace Web_DonNghiPhep.Controllers
         public async Task<IActionResult> Index()
         {
             var listuser = _context.User
-                 .Include(u => u.UserRoles)
+                .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
-                 .Include(u => u.EmployeeUs)
-                     .ThenInclude(e => e.Department)
-                 .Include(u => u.EmployeeUs)
-                     .ThenInclude(e => e.Title);
-            var listus = await listuser.ToListAsync();
+                .Include(u => u.EmployeeUs)
+                    .ThenInclude(e => e.DepartmentEmployees) // Bao gồm bảng trung gian
+                        .ThenInclude(de => de.Department)   // Lấy thông tin phòng ban từ bảng trung gian
+                .Include(u => u.EmployeeUs)
+                    .ThenInclude(e => e.Title);
+            var listus = await listuser.Select(x => new EmployeeVM
+            {
+                Employee_ID = x.Employee_ID,
+                FullName = x.EmployeeUs.FullName,
+                Dob = x.EmployeeUs.Dob.Value,
+                Department_name = x.EmployeeUs.DepartmentEmployees.FirstOrDefault(z => z.EmployeeId == x.Employee_ID).Department.DepartmentName,
+                UserName = x.UserName,
+                Title_name = x.EmployeeUs.Title.Title_name,
+                Status = x.Status,
+                Role_IDs = x.UserRoles.Where(z => z.UserID == x.UserID).Select(x => x.RoleID).ToList(),
+                Roles_Name = x.UserRoles.Where(z => z.UserID == x.UserID).Select(x => x.Role.Role_Name).ToList(),
+                 created_at = x.created_at,
+                updated_at = x.updated_at,
+            }).ToListAsync();
             return View(listus);
         }
 
@@ -145,9 +154,25 @@ namespace Web_DonNghiPhep.Controllers
                 .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
                  .Include(u => u.EmployeeUs)
-                     .ThenInclude(e => e.Department)
+                     .ThenInclude(e => e.DepartmentEmployees)
                  .Include(u => u.EmployeeUs)
                      .ThenInclude(e => e.Title)
+                .Select(x => new EmployeeVM
+                {
+                    Employee_ID = x.Employee_ID,
+                    FullName = x.EmployeeUs.FullName,
+                    Dob = x.EmployeeUs.Dob.Value,
+                    Department_name = x.EmployeeUs.DepartmentEmployees.FirstOrDefault(z => z.EmployeeId == x.Employee_ID).Department.DepartmentName,
+                    UserName = x.UserName,
+                    Password = x.Password,
+                    Title_name = x.EmployeeUs.Title.Title_name,
+                    Status = x.Status,
+                    Role_IDs = x.UserRoles.Where(z => z.UserID == x.UserID).Select(x => x.RoleID).ToList(),
+                    Roles_Name = x.UserRoles.Where(z => z.UserID == x.UserID).Select(x => x.Role.Role_Name).ToList(),
+                    created_at = x.created_at,
+                    updated_at = x.updated_at,
+                    
+                })
                 .FirstOrDefaultAsync(m => m.Employee_ID == id);
 
             if (user == null)
@@ -220,7 +245,6 @@ namespace Web_DonNghiPhep.Controllers
                     Dob = evm.Dob,
                     Email = evm.Email,
                     PhoneNumber = evm.PhoneNumber,
-                    Department_id = evm.Department_id,
                     Title_id = evm.Title_id,
                 };
                 User usernew = new User()
@@ -234,8 +258,15 @@ namespace Web_DonNghiPhep.Controllers
                     updated_at = DateTime.Now,
                 };
 
+                DepartmentEmployee dpem = new DepartmentEmployee()
+                {
+                    EmployeeId = evm.Employee_ID,
+                    DepartmentId = evm.Department_id
+                };
+
                 _context.Add(emnew);
                 _context.Add(usernew);
+                _context.Add(dpem);
                 var rsc = await _context.SaveChangesAsync();
                 if (rsc > 0)
                 {
@@ -272,7 +303,7 @@ namespace Web_DonNghiPhep.Controllers
             var listuser = await _context.Employee
                             .Include(x => x.User)
                                 .ThenInclude(x => x.UserRoles)
-                            .Include(x => x.Department)
+                            .Include(x => x.DepartmentEmployees)
                             .Include(x => x.Title)
                             .ToListAsync();
             var user = listuser.Where(x => x.Employee_ID == id)
@@ -282,10 +313,10 @@ namespace Web_DonNghiPhep.Controllers
                             UserName = x.User.UserName,
                             FullName = x.FullName,
                             Email = x.Email,
-                            Dob = x.Dob.Value,
+                            Dob = x.Dob,
                             PhoneNumber = x.PhoneNumber,
                             Password = x.User.Password,
-                            Department_id = x.Department_id,
+                            Department_id = x.DepartmentEmployees.SingleOrDefault(z => z.EmployeeId == x.Employee_ID)?.DepartmentId,
                             Title_id = x.Title_id,
                             Status = x.User.Status,
                             Role_IDs = x.User.UserRoles.Select(z => z.RoleID).ToList(),
@@ -307,7 +338,7 @@ namespace Web_DonNghiPhep.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost("chinh-sua-tai-khoan/{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("Employee_ID,UserName,Password,FullName,Status,Role_IDs,Title_id,Department_id,Dob,PhoneNumber,Email")] EmployeeVM evm)
+        public async Task<IActionResult> Edit(string id, [Bind("Employee_ID,UserName,Dob,Password,FullName,Status,Role_IDs,Title_id,Department_id,Dob,PhoneNumber,Email")] EmployeeVM evm)
         {
             if (id != evm.Employee_ID)
             {
@@ -323,7 +354,7 @@ namespace Web_DonNghiPhep.Controllers
             }
             if (ModelState.IsValid)
             {
-                // Kiểm tra trùng lặp tên đăng nhập
+                
                 var isUserNameDuplicate = await _context.User
                     .AnyAsync(u => u.UserName.ToLower() == evm.UserName.Trim().ToLower() && u.Employee_ID != evm.Employee_ID);
 
@@ -344,8 +375,47 @@ namespace Web_DonNghiPhep.Controllers
                         employee.Dob = evm.Dob;
                         employee.Email = evm.Email;
                         employee.PhoneNumber = evm.PhoneNumber;
-                        employee.Department_id = evm.Department_id;
                         employee.Title_id = evm.Title_id;
+                        /// test
+                        using (var transaction = _context.Database.BeginTransaction())
+                        {
+                            try
+                            {
+                                var departemployee = _context.DepartmentEmployee.FirstOrDefault(x => x.EmployeeId == employee.Employee_ID);
+
+                                if (departemployee != null)
+                                {
+                                   
+                                    _context.DepartmentEmployee.Remove(departemployee);
+                                    _context.SaveChanges();
+
+                                    
+                                    var newDepartmentEmployee = new DepartmentEmployee
+                                    {
+                                        DepartmentId = evm.Department_id,
+                                        EmployeeId = evm.Employee_ID
+                                    };
+
+                                    _context.DepartmentEmployee.Add(newDepartmentEmployee);
+                                    
+                                }
+
+                                var depmanager = _context.Department.FirstOrDefault(x => x.ManagerId == employee.Employee_ID);
+                                if(depmanager != null)
+                                {
+                                    depmanager.ManagerId = null;
+                                    _context.Update(depmanager);
+                                }
+
+                                transaction.Commit();
+                            }
+                            catch
+                            {
+                                transaction.Rollback();
+                                throw;
+                            }
+                        }
+
 
 
                         user.UserName = evm.UserName;
@@ -374,7 +444,7 @@ namespace Web_DonNghiPhep.Controllers
                         var rs = await _context.SaveChangesAsync();
                         if (rs > 0)
                         {
-                            SetMessage("Cập nhật thành công");
+                            _messageService.SetMessage("Cập nhật thành công");
                         }
                         return RedirectToAction(nameof(Index));
                     }
@@ -386,12 +456,14 @@ namespace Web_DonNghiPhep.Controllers
                         }
                         else
                         {
-                            SetMessage("Cập nhật thất bại", "error");
+                            _messageService.SetMessage("Cập nhật thất bại", "error");
                             throw;
                         }
                     }
                 }
             }
+
+            
             ViewData["Department_ID"] = new SelectList(_context.Department, "Department_id", "DepartmentName", evm.Department_id);
             ViewData["Title_ID"] = new SelectList(_context.Title, "Title_id", "Title_name", evm.Title_id);
             ViewData["Role_ID"] = new SelectList(_context.Role, "Role_ID", "Role_ID", evm.Role_IDs);
@@ -441,11 +513,11 @@ namespace Web_DonNghiPhep.Controllers
             int affectedRows = await _context.SaveChangesAsync();
             if (affectedRows > 0)
             {
-                SetMessage("Xoá thành công");
+                _messageService.SetMessage("Xoá thành công");
             }
             else
             {
-                SetMessage("Xoá thất bại", "error");
+                _messageService.SetMessage("Xoá thất bại", "error");
             }
             return RedirectToAction(nameof(Index));
         }

@@ -26,8 +26,12 @@ namespace Web_DonNghiPhep.Models
         [DataType(DataType.Date)]
         [Display(Name = "Ngày cập nhật")]
         public DateTime? UpdatedAt { get; set; } = DateTime.Now;
-        //public Employee Manager { get; set; }
-        public virtual ICollection<Employee>? Employees { get; set; }
+
+        [Display(Name = "Phòng ban cấp trên")]
+        public string? ParentId { get; set; }
+        public virtual Department? Parent { get; set; } = null;
+        public virtual ICollection<Department>? SubDepartments { get; set; } = new List<Department>();
+        public virtual ICollection<DepartmentEmployee> DepartmentEmployees { get; set; } = new List<DepartmentEmployee>();
     }
 
 }

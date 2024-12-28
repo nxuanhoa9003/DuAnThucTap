@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
 using Web_DonNghiPhep.Data;
+using Web_DonNghiPhep.Services;
 
 namespace Web_DonNghiPhep
 {
@@ -19,6 +21,10 @@ namespace Web_DonNghiPhep
             });
 
             builder.Services.AddDistributedMemoryCache();
+
+            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            builder.Services.AddSingleton<ITempDataDictionaryFactory, TempDataDictionaryFactory>();
+            builder.Services.AddScoped<IMessageService, MessageService>();
 
             builder.Services.AddSession(options =>
             {
