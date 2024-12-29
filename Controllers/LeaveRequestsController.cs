@@ -21,7 +21,7 @@ namespace Web_DonNghiPhep.Controllers
             _messageService = messageService;
         }
         // GET: LeaveRequestsController
-
+        [Authorize(Roles = "nhân viên")]
         public async Task<IActionResult> Index()
         {
             var employeeid = User.FindFirst("Employeeid")?.Value;
@@ -294,6 +294,14 @@ namespace Web_DonNghiPhep.Controllers
                 {
                     request.ApprovedById = employeeid;
                     request.Status = "Approved";
+                    var leavebalance = _context.LeaveBalance.FirstOrDefault(x => x.Employee_id == request.Employee_id);
+                    
+                    if(leavebalance == null) return NotFound();
+                    
+                    var dayoff = (request.EndDate - request.StartDate).Days + 1;
+                    leavebalance.UsedDays += dayoff;
+                    leavebalance.RemainingDays = leavebalance.RemainingDays == 0 ? 0 : leavebalance.TotalDays - leavebalance.UsedDays;
+                    _context.Update(leavebalance);
                 }
 
 

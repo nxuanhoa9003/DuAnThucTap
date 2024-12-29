@@ -6,11 +6,12 @@
 
 <h4>Cấu hình ngày nghỉ</h4>
 
+<p>
+    <a class="btn btn-primary" asp-action="Create">Thiết lập mới</a>
+</p>
+
 @if (Model.Any())
 {
-    <p>
-        <a class="btn btn-primary" asp-action="Create">Thiết lập mới</a>
-    </p>
 
     <div class="form-group col-md-4">
         <form asp-action="Index" asp-controller="LeaveBalances">
