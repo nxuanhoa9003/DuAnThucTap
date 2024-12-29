@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Web_DonNghiPhep.Data;
 using Web_DonNghiPhep.Models;
 using Web_DonNghiPhep.Services;
@@ -34,17 +35,26 @@ namespace Web_DonNghiPhep.Controllers
             ViewBag.SelectedYear = yearselect;
 
             var employeeid = User.FindFirst("Employeeid")?.Value;
-            var department = _context.Department.SingleOrDefault(x => x.ManagerId == employeeid);
+            var department = _context.Department.Include(x => x.Parent).SingleOrDefault(x => x.ManagerId == employeeid);
 
-            if (employeeid != null)
+            if (department != null)
             {
                 var listleave = _context.LeaveBalance
                    .Include(l => l.Employee)
                    .ThenInclude(de => de.DepartmentEmployees)
-                   .Where(x =>  x.Employee.DepartmentEmployees.Any(z => z.DepartmentId == department.ManagerId)
+                   .Where(x => x.Employee.DepartmentEmployees.Any(z => z.DepartmentId == department.Department_id)
                     && x.Employee_id != employeeid
                     && department.ManagerId == employeeid
                    );
+
+                if (department.Parent == null)
+                {
+                    var listidmanager = _context.Department.Include(x => x.Parent)
+                        .Where(x => x.ParentId == department.Department_id)
+                        .Select(x => x.ManagerId).ToList();
+                    listleave = _context.LeaveBalance.Include(l => l.Employee).Where(x => listidmanager.Contains(x.Employee_id));
+
+                }
 
                 if (yearselect != null)
                 {
@@ -78,9 +88,23 @@ namespace Web_DonNghiPhep.Controllers
         public IActionResult Create()
         {
             var employeeid = User.FindFirst("Employeeid")?.Value;
-            var department = _context.Department.SingleOrDefault(x => x.ManagerId == employeeid);
-            var listemp = _context.DepartmentEmployee.Where(x => x.DepartmentId == department.Department_id && x.EmployeeId != employeeid);
-            ViewData["Employee_id"] = new SelectList(listemp, "Employee_ID", "FullName");
+            var department = _context.Department.Include(x => x.Parent).SingleOrDefault(x => x.ManagerId == employeeid);
+            if(department == null) return NotFound();
+            var listempde = _context.Employee.Include(x => x.DepartmentEmployees)
+                .Where(x => x.DepartmentEmployees.Any(z => z.DepartmentId == department.Department_id &&  z.EmployeeId != employeeid));
+                
+                
+            if (department.Parent == null)
+            {
+                var listidmanager = _context.Department.Include(x => x.Parent)
+                    .Where(x => x.ParentId == department.Department_id)
+                    .Select(x => x.ManagerId).ToList();
+                listempde = _context.Employee
+                    .Where(x => listidmanager.Contains(x.Employee_ID));
+                    
+
+            }
+            ViewData["Employee_id"] = new SelectList(listempde, "Employee_ID", "FullName");
             return View();
         }
 
@@ -93,7 +117,20 @@ namespace Web_DonNghiPhep.Controllers
         {
             var employeeid = User.FindFirst("Employeeid")?.Value;
             var department = _context.Department.SingleOrDefault(x => x.ManagerId == employeeid);
-            var listemp = _context.DepartmentEmployee.Where(x => x.DepartmentId == department.Department_id && x.EmployeeId != employeeid);
+            if (department == null) return NotFound();
+            var listempde = _context.Employee.Include(x => x.DepartmentEmployees)
+                .Where(x => x.DepartmentEmployees.Any(z => z.DepartmentId == department.Department_id && z.EmployeeId != employeeid));
+
+            if (department.Parent == null)
+            {
+                var listidmanager = _context.Department.Include(x => x.Parent)
+                    .Where(x => x.ParentId == department.Department_id)
+                    .Select(x => x.ManagerId).ToList();
+                listempde = _context.Employee
+                    .Where(x => listidmanager.Contains(x.Employee_ID));
+
+
+            }
 
             var existingEmployees = _context.LeaveBalance
                                     .Include(x => x.Employee)
@@ -116,7 +153,7 @@ namespace Web_DonNghiPhep.Controllers
 
             if (!newEmployees.Any())
             {
-                ViewData["Employee_id"] = new SelectList(listemp, "Employee_ID", "FullName", leaveBalance.Employee_id);
+                ViewData["Employee_id"] = new SelectList(listempde, "Employee_ID", "FullName", leaveBalance.Employee_id);
                 return View(leaveBalance);
             }
 
@@ -127,7 +164,7 @@ namespace Web_DonNghiPhep.Controllers
                 if (leaveBalance.Year < currentYear)
                 {
                     ModelState.AddModelError("", $"Năm cài đặt không được nhỏ hơn năm hiện tại");
-                    ViewData["Employee_id"] = new SelectList(listemp, "Employee_ID", "FullName", leaveBalance.Employee_id);
+                    ViewData["Employee_id"] = new SelectList(listempde, "Employee_ID", "FullName", leaveBalance.Employee_id);
                     return View(leaveBalance);
                 }
                 foreach (var emid in newEmployees)
@@ -147,7 +184,7 @@ namespace Web_DonNghiPhep.Controllers
             }
 
             _messageService.SetMessage("Cài đặt thất bại", "error");
-            ViewData["Employee_id"] = new SelectList(listemp, "Employee_ID", "FullName", leaveBalance.Employee_id);
+            ViewData["Employee_id"] = new SelectList(listempde, "Employee_ID", "FullName", leaveBalance.Employee_id);
             return View(leaveBalance);
         }
 

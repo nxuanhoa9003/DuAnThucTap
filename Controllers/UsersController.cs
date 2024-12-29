@@ -65,13 +65,16 @@ namespace Web_DonNghiPhep.Controllers
             {
                 if (user.Status)
                 {
+
+
                     var claims = new List<Claim>
                      {
                         new Claim("Employeeid", user.Employee_ID),
                          new Claim("FullName", user.EmployeeUs.FullName)
                      };
-
                     claims.AddRange(user.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role.Role_Name.ToLower())));
+
+                    var department = _context.Department.FirstOrDefault(x => x.ManagerId == user.Employee_ID);
 
                     // Tạo ClaimsIdentity (Danh tính người dùng)
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -87,11 +90,21 @@ namespace Web_DonNghiPhep.Controllers
 
                     if (User.IsInRole("admin"))
                     {
+
                         return RedirectToAction("Index");
                     }
                     else
                     {
-                        return RedirectToAction("Index", "LeaveRequests");
+                        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+                        if (roles.Count == 1 && roles[0] == "quản lý") // Kiểm tra chỉ có một vai trò và vai trò đó là "quản lý"
+                        {
+                            return RedirectToAction("ApproveRequests", "LeaveRequests");
+                        }
+                        else
+                        {
+                            return RedirectToAction("Index", "LeaveRequests");
+                        }
+
                     }
                 }
                 else
