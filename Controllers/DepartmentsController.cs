@@ -160,7 +160,17 @@ namespace Web_DonNghiPhep.Controllers
                             _context.Update(dpemexist);
                         }
 
+                        var listrequest = _context.LeaveRequest.Where(x => x.Status == "Pending" && x.NextApproverId == dpcurrent.ManagerId).ToList();
+
                         dpcurrent.ManagerId = department.ManagerId;
+
+                        var newmanagerdepartment = department.ManagerId;
+                        foreach (var request in listrequest)
+                        {
+                            request.NextApproverId = newmanagerdepartment;
+                            _context.Update(request);
+                        }
+
                         _context.Update(dpcurrent);
 
                     }
