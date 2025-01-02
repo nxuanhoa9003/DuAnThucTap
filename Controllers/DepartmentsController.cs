@@ -156,8 +156,6 @@ namespace Web_DonNghiPhep.Controllers
                     department.UpdatedAt = DateTime.Now;
                     if(dpcurrent.ManagerId != department.ManagerId)
                     {
-                      
-
                         var dpemcurrent = _context.DepartmentEmployee.FirstOrDefault(x => x.DepartmentId == dpcurrent.Department_id && x.EmployeeId == dpcurrent.ManagerId);
 
                         if (dpemcurrent != null)
@@ -184,10 +182,10 @@ namespace Web_DonNghiPhep.Controllers
                             request.NextApproverId = newmanagerdepartment;
                             _context.Update(request);
                         }
-
-                        _context.Update(dpcurrent);
-
                     }
+
+                    dpcurrent.ParentId = department.ParentId;
+                    _context.Update(dpcurrent);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
