@@ -148,7 +148,7 @@ namespace Web_DonNghiPhep.Controllers
                 Status = x.Status,
                 Role_IDs = x.UserRoles.Where(z => z.UserID == x.UserID).Select(x => x.RoleID).ToList(),
                 Roles_Name = x.UserRoles.Where(z => z.UserID == x.UserID).Select(x => x.Role.Role_Name).ToList(),
-                 created_at = x.created_at,
+                created_at = x.created_at,
                 updated_at = x.updated_at,
             }).ToListAsync();
             return View(listus);
@@ -184,7 +184,7 @@ namespace Web_DonNghiPhep.Controllers
                     Roles_Name = x.UserRoles.Where(z => z.UserID == x.UserID).Select(x => x.Role.Role_Name).ToList(),
                     created_at = x.created_at,
                     updated_at = x.updated_at,
-                    
+
                 })
                 .FirstOrDefaultAsync(m => m.Employee_ID == id);
 
@@ -316,6 +316,7 @@ namespace Web_DonNghiPhep.Controllers
             var listuser = await _context.Employee
                             .Include(x => x.User)
                                 .ThenInclude(x => x.UserRoles)
+                                 .ThenInclude(ur => ur.Role)
                             .Include(x => x.DepartmentEmployees)
                             .Include(x => x.Title)
                             .ToListAsync();
@@ -333,6 +334,8 @@ namespace Web_DonNghiPhep.Controllers
                             Title_id = x.Title_id,
                             Status = x.User.Status,
                             Role_IDs = x.User.UserRoles.Select(z => z.RoleID).ToList(),
+                            Roles_Name = x.User.UserRoles.Select(z => z.Role.Role_Name).ToList(),
+
                         }).FirstOrDefault();
             if (user == null)
             {
@@ -359,7 +362,14 @@ namespace Web_DonNghiPhep.Controllers
             }
 
             var employee = await _context.Employee.FirstOrDefaultAsync(x => x.Employee_ID.Equals(evm.Employee_ID.Trim()));
-            var user = await _context.User.FirstOrDefaultAsync(x => x.Employee_ID.Equals(evm.Employee_ID.Trim()));
+            var user = await _context.User.Include(x => x.UserRoles).ThenInclude(x => x.Role).FirstOrDefaultAsync(x => x.Employee_ID.Equals(evm.Employee_ID.Trim()));
+
+            var listrole = user.UserRoles.Select(z => z.Role.Role_Name).ToList();
+            if (listrole.Count == 1 && listrole.Contains("Admin"))
+            {
+                evm.Role_IDs = user.UserRoles.Select(x => x.RoleID).ToList();
+                ModelState.Remove("Role_IDs");
+            }
 
             if (employee == null || user == null)
             {
@@ -367,7 +377,7 @@ namespace Web_DonNghiPhep.Controllers
             }
             if (ModelState.IsValid)
             {
-                
+
                 var isUserNameDuplicate = await _context.User
                     .AnyAsync(u => u.UserName.ToLower() == evm.UserName.Trim().ToLower() && u.Employee_ID != evm.Employee_ID);
 
@@ -389,7 +399,7 @@ namespace Web_DonNghiPhep.Controllers
                         employee.Email = evm.Email;
                         employee.PhoneNumber = evm.PhoneNumber;
                         employee.Title_id = evm.Title_id;
-                        /// test
+
                         using (var transaction = _context.Database.BeginTransaction())
                         {
                             try
@@ -398,11 +408,11 @@ namespace Web_DonNghiPhep.Controllers
 
                                 if (departemployee != null)
                                 {
-                                   
+
                                     _context.DepartmentEmployee.Remove(departemployee);
                                     _context.SaveChanges();
 
-                                    
+
                                     var newDepartmentEmployee = new DepartmentEmployee
                                     {
                                         DepartmentId = evm.Department_id,
@@ -410,11 +420,11 @@ namespace Web_DonNghiPhep.Controllers
                                     };
 
                                     _context.DepartmentEmployee.Add(newDepartmentEmployee);
-                                    
+
                                 }
 
                                 var depmanager = _context.Department.FirstOrDefault(x => x.ManagerId == employee.Employee_ID);
-                                if(depmanager != null)
+                                if (depmanager != null)
                                 {
                                     depmanager.ManagerId = null;
                                     _context.Update(depmanager);
@@ -437,19 +447,27 @@ namespace Web_DonNghiPhep.Controllers
                         user.updated_at = DateTime.Now;
 
                         // Xóa các role cũ của người dùng
-                        var existingUserRoles = _context.UserRole.Where(ur => ur.UserID == user.UserID);
-                        _context.UserRole.RemoveRange(existingUserRoles);
 
 
-                        foreach (var roleId in evm.Role_IDs)
+                        if (listrole.Count != 1 || !listrole.Contains("Admin"))
+
                         {
-                            var userRole = new UserRole
+                            var existingUserRoles = _context.UserRole.Where(ur => ur.UserID == user.UserID);
+                            _context.UserRole.RemoveRange(existingUserRoles);
+
+
+                            foreach (var roleId in evm.Role_IDs)
                             {
-                                UserID = user.UserID,
-                                RoleID = roleId
-                            };
-                            _context.UserRole.Add(userRole);
+                                var userRole = new UserRole
+                                {
+                                    UserID = user.UserID,
+                                    RoleID = roleId
+                                };
+                                _context.UserRole.Add(userRole);
+                            }
                         }
+
+
 
                         _context.Entry(employee).State = EntityState.Modified;
                         _context.Entry(user).State = EntityState.Modified;
@@ -476,7 +494,6 @@ namespace Web_DonNghiPhep.Controllers
                 }
             }
 
-            
             ViewData["Department_ID"] = new SelectList(_context.Department, "Department_id", "DepartmentName", evm.Department_id);
             ViewData["Title_ID"] = new SelectList(_context.Title, "Title_id", "Title_name", evm.Title_id);
             ViewData["Role_ID"] = new SelectList(_context.Role, "Role_ID", "Role_ID", evm.Role_IDs);

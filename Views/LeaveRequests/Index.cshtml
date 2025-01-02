@@ -52,7 +52,7 @@
                 <td class="text-center">
                     @{
                         var status = item.Status;
-                        var clasbage = string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase) ? "warning" : status == "Approved" ? "success" : "Rejected";
+                        var clasbage = status == "Pending" ? "warning" : status == "Approved" ? "success" : "danger";
                     }
                     <span class="badge bg-@clasbage text-ellipsis">@status</span>
                 </td>

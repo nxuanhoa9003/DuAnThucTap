@@ -151,14 +151,6 @@ namespace Web_DonNghiPhep.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            foreach (var state in ModelState)
-            {
-                Console.WriteLine($"Key: {state.Key}");
-                foreach (var error in state.Value.Errors)
-                {
-                    Console.WriteLine($"Error: {error.ErrorMessage}");
-                }
-            }
 
             return View(leaveRequest);
         }
@@ -278,6 +270,7 @@ namespace Web_DonNghiPhep.Controllers
             if (request == null) return NotFound();
 
             var employeeid = User.FindFirst("Employeeid")?.Value;
+            string actionStatus = "";
 
             if (action == "approve")
             {
@@ -293,6 +286,7 @@ namespace Web_DonNghiPhep.Controllers
                 if (department.Parent != null)
                 {
                     request.NextApproverId = department.Parent.ManagerId;
+                    actionStatus = "Approved and Forwarded";
                 }
                 else
                 {
@@ -301,6 +295,8 @@ namespace Web_DonNghiPhep.Controllers
                     var leavebalance = _context.LeaveBalance.FirstOrDefault(x => x.Employee_id == request.Employee_id);
 
                     if (leavebalance == null) return NotFound();
+
+                    actionStatus = "Approved";
 
                     var dayoff = (request.EndDate - request.StartDate).Days + 1;
                     leavebalance.UsedDays += dayoff;
@@ -317,7 +313,21 @@ namespace Web_DonNghiPhep.Controllers
                 request.ApprovedById = employeeid;
                 request.NextApproverId = null;
                 await _hubContext.Clients.Group("Employee").SendAsync("ReceiveNotification", "Đơn nghỉ phép của bạn đã bị từ chối.");
+                
+                actionStatus = "Rejected";
             }
+
+            request.UpdatedAt = DateTime.Now;
+            _context.Update(request);
+            var history = new ApprovalHistory
+            {
+                LeaveRequestId = request.Id,
+                ApprovedById = employeeid,
+                Action = actionStatus,
+                ProcessedAt = DateTime.Now
+            };
+            _context.ApprovalHistories.Add(history);
+
 
             _context.Update(request);
             await _context.SaveChangesAsync();
