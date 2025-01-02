@@ -44,7 +44,7 @@
         <dd class = "col-sm-10">
             @{
                 var status = Model.Status;
-                var clasbage = string.Equals(status, "pending", StringComparison.OrdinalIgnoreCase) ? "warning" : status == "Approved" ? "success" : "Rejected";
+                var clasbage = status == "Pending" ? "warning" : status == "Approved" ? "success" : "danger";
             }
             <span class="badge bg-@clasbage">@status</span>
         </dd>

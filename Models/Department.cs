@@ -8,12 +8,12 @@ namespace Web_DonNghiPhep.Models
     {
         [Key]
         [DisplayName("Mã phòng ban")]
-        public string Department_id { get; set; }
+        public string? Department_id { get; set; }
 
         [Required]
         [StringLength(100, MinimumLength = 5)]
         [Display(Name = "Tên phòng ban")]
-        public string DepartmentName { get; set; }
+        public string? DepartmentName { get; set; }
 
         // Trưởng phòng (Manager)
         [Display(Name = "Trưởng phòng")]

@@ -41,6 +41,7 @@ namespace Web_DonNghiPhep.Models
         public virtual ICollection<LeaveBalance> LeaveBalances { get; set; }
         public virtual ICollection<LeaveRequest> ApprovedLeaveRequests { get; set; }
         public virtual ICollection<DepartmentEmployee> DepartmentEmployees { get; set; } = new List<DepartmentEmployee>();
+        public virtual ICollection<ApprovalHistory>? ApprovalHistories { get; set; }
     }
 
 }

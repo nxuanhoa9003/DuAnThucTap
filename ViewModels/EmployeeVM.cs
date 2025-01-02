@@ -73,7 +73,7 @@ namespace Web_DonNghiPhep.ViewModels
         public List<int> Role_IDs { get; set; }
 
 
-        [DisplayName("Vai trò 1")]
+        [DisplayName("Vai trò")]
         public List<string>? Roles_Name { get; set; }
 
         [DisplayName("Ngày tạo")]

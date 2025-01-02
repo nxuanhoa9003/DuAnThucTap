@@ -53,7 +53,7 @@ namespace Web_DonNghiPhep.Controllers
             }
             var emp = _context.DepartmentEmployee.Where(x => x.DepartmentId == id && x.EmployeeIsManager == true).Select(x => x.Employee).FirstOrDefault();
             string? managername = emp?.FullName;
-            var department = await _context.Department.Include(x => x.DepartmentEmployees)
+            var department = await _context.Department.Include(x => x.Parent).Include(x => x.DepartmentEmployees)
                 .Select(x => new DepartmentVM
                 {
                     Department_id = x.Department_id,
@@ -83,8 +83,22 @@ namespace Web_DonNghiPhep.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost("tao-moi-phong-ban")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Department_id,DepartmentName, ParentId")] Department department)
+        public async Task<IActionResult> Create([Bind("Department_id,DepartmentName,ParentId")] Department department)
         {
+            if (!string.IsNullOrEmpty(department.ParentId))
+            {
+                var parentDepartment = await _context.Department
+                    .FirstOrDefaultAsync(d => d.Department_id == department.ParentId);
+
+                if (parentDepartment == null)
+                {
+                    ModelState.AddModelError("ParentId", "Phòng ban cấp trên không tồn tại.");
+                }
+            }
+            else
+            {
+                department.ParentId = null; // Xử lý trường hợp không có cấp trên
+            }
             if (ModelState.IsValid)
             {
                 _context.Add(department);
