@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Web_DonNghiPhep.Data;
+using Web_DonNghiPhep.Hubs;
 using Web_DonNghiPhep.Models;
 using Web_DonNghiPhep.Services;
 using Web_DonNghiPhep.ViewModels;
@@ -15,11 +17,16 @@ namespace Web_DonNghiPhep.Controllers
     {
         private readonly MyDBContext _context;
         private readonly IMessageService _messageService;
-        public LeaveRequestsController(MyDBContext context, IMessageService messageService)
+        private readonly IHubContext<NotificationsHub> _hubContext;     //thêm đối tượng để sử dụng SignID
+
+        [ActivatorUtilitiesConstructor]
+        public LeaveRequestsController(MyDBContext context, IMessageService messageService, IHubContext<NotificationsHub> hubContext)
         {
             _context = context;
             _messageService = messageService;
+            _hubContext = hubContext;  
         }
+
         // GET: LeaveRequestsController
         [Authorize(Roles = "nhân viên")]
         public async Task<IActionResult> Index()
@@ -86,29 +93,24 @@ namespace Web_DonNghiPhep.Controllers
 
             if (string.IsNullOrEmpty(employeeid))
             {
-
                 ModelState.AddModelError("", "Không thể xác định được mã nhân viên. Vui lòng đăng nhập lại.");
                 return View(leaveRequest);
             }
 
             leaveRequest.Employee_id = employeeid;
 
-
-
             ModelState.Remove(nameof(leaveRequest.Employee_id));
 
             if (ModelState.IsValid)
             {
-
-                // tìm phòng ban
                 var department = await _context.DepartmentEmployee.Include(x => x.Department).ThenInclude(d => d.Parent)
                         .Where(de => de.EmployeeId == employeeid)
                         .Select(de => de.Department)
                         .FirstOrDefaultAsync();
-                
+
                 leaveRequest.DepartmentId = department.Department_id;
 
-                // tìm trưởng phòng
+                // Find manager
                 if (department.ManagerId == employeeid)
                 {
                     var deparent = department.Parent;
@@ -129,8 +131,6 @@ namespace Web_DonNghiPhep.Controllers
                     leaveRequest.NextApproverId = department.ManagerId;
                 }
 
-
-
                 leaveRequest.CreatedAt = DateTime.Now;
                 leaveRequest.UpdatedAt = DateTime.Now;
 
@@ -139,13 +139,18 @@ namespace Web_DonNghiPhep.Controllers
                 if (rsc > 0)
                 {
                     _messageService.SetMessage("Tạo đơn thành công");
+
+                    // Notify manager about new leave request
+                    await _hubContext.Clients.Group("Manager").SendAsync("ReceiveNotification", "Có đơn nghỉ phép mới.");
                 }
                 else
                 {
                     _messageService.SetMessage("Tạo đơn thất bại", "error");
                 }
+
                 return RedirectToAction(nameof(Index));
             }
+
             foreach (var state in ModelState)
             {
                 Console.WriteLine($"Key: {state.Key}");
@@ -154,6 +159,7 @@ namespace Web_DonNghiPhep.Controllers
                     Console.WriteLine($"Error: {error.ErrorMessage}");
                 }
             }
+
             return View(leaveRequest);
         }
 
@@ -227,7 +233,6 @@ namespace Web_DonNghiPhep.Controllers
             return View(await listrequests.ToListAsync());
         }
 
-
         [Authorize(Roles = "quản lý")]
         [HttpGet]
         public async Task<ActionResult> DetailsRequest(int? id)
@@ -272,84 +277,52 @@ namespace Web_DonNghiPhep.Controllers
 
             if (request == null) return NotFound();
 
-            var employeeId = User.FindFirst("Employeeid")?.Value;
-
-            
-            if (request.NextApproverId != null && request.NextApproverId != employeeId)
-            {
-                return Forbid(); 
-            }
-
-            string actionStatus = "";
-           
+            var employeeid = User.FindFirst("Employeeid")?.Value;
 
             if (action == "approve")
             {
-                var department = _context.Department.Include(x => x.Parent)
-                                    .FirstOrDefault(x => x.Department_id == request.DepartmentId);
+                var department = _context.Department.Include(x => x.Parent).FirstOrDefault(x => x.Department_id == request.DepartmentId);
 
                 if (request.NextApproverId != null)
                 {
-                    department = _context.Department.Include(x => x.Parent)
-                                    .FirstOrDefault(x => x.ManagerId == request.NextApproverId);
+                    department = _context.Department.Include(x => x.Parent).FirstOrDefault(x => x.ManagerId == request.NextApproverId);
                 }
 
                 if (department == null) return NotFound();
 
                 if (department.Parent != null)
                 {
-                    // Chuyển đơn lên quản lý cấp trên
                     request.NextApproverId = department.Parent.ManagerId;
-                    actionStatus = "Approved and Forwarded";
                 }
                 else
                 {
-                    // Đơn được duyệt cuối cùng
-                    request.ApprovedById = employeeId;
+                    request.ApprovedById = employeeid;
                     request.Status = "Approved";
+                    var leavebalance = _context.LeaveBalance.FirstOrDefault(x => x.Employee_id == request.Employee_id);
 
-                    // Cập nhật Leave Balance (số ngày nghỉ)
-                    var leaveBalance = _context.LeaveBalance.FirstOrDefault(x => x.Employee_id == request.Employee_id);
+                    if (leavebalance == null) return NotFound();
 
-                    if (leaveBalance == null) return NotFound();
-
-                    var dayOff = (request.EndDate - request.StartDate).Days + 1;
-                    leaveBalance.UsedDays += dayOff;
-                    leaveBalance.RemainingDays = leaveBalance.RemainingDays == 0 ? 0 : leaveBalance.TotalDays - leaveBalance.UsedDays;
-                    _context.Update(leaveBalance);
-
-                    actionStatus = "Approved";
+                    var dayoff = (request.EndDate - request.StartDate).Days + 1;
+                    leavebalance.UsedDays += dayoff;
+                    leavebalance.RemainingDays = leavebalance.RemainingDays == 0 ? 0 : leavebalance.TotalDays - leavebalance.UsedDays;
+                    _context.Update(leavebalance);
                 }
+
+                //THông báo đơn duyệt của bạn đã bị từ chối
+                await _hubContext.Clients.Group("Employee").SendAsync("ReceiveNotification", "Đơn nghỉ phép của bạn đã được phê duyệt.");
             }
             else if (action == "reject")
             {
-                // Xử lý khi đơn bị từ chối
                 request.Status = "Rejected";
-                request.ApprovedById = employeeId;
+                request.ApprovedById = employeeid;
                 request.NextApproverId = null;
-                actionStatus = "Rejected";
-               
+                await _hubContext.Clients.Group("Employee").SendAsync("ReceiveNotification", "Đơn nghỉ phép của bạn đã bị từ chối.");
             }
-            request.UpdatedAt = DateTime.Now;
+
             _context.Update(request);
-
-            var history = new ApprovalHistory
-            {
-                LeaveRequestId = request.Id,
-                ApprovedById = employeeId,
-                Action = actionStatus,
-                ProcessedAt = DateTime.Now
-            };
-            _context.ApprovalHistories.Add(history);
-
             await _context.SaveChangesAsync();
             _messageService.SetMessage("Đã xác nhận đơn nghỉ phép");
             return RedirectToAction("ApproveRequests");
         }
-       
-
-
-
-
     }
 }
