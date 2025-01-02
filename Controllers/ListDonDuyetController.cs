@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Web_DonNghiPhep.Data;
 using Web_DonNghiPhep.Services;
 using Web_DonNghiPhep.ViewModels;
@@ -15,102 +16,97 @@ namespace Web_DonNghiPhep.Controllers
             _messageService = messageService;
         }
         // LỊCH SỬ ĐƠN DUYỆT
-        public IActionResult Index()
+        public async Task<IActionResult> Index(string searchString, string status, DateTime? fromDate, DateTime? toDate)
         {
-            var danhSach = new List<ListNghiPhepVM>
+           
+            var managerId = User.FindFirst("EmployeeId")?.Value;
+
+            if (string.IsNullOrEmpty(managerId))
             {
-                new ListNghiPhepVM
+                return Unauthorized();
+            }
+
+            
+            var approvedRequestsQuery = _context.LeaveRequest
+                .Include(r => r.Employee)
+                .Include(r => r.ApprovalHistories)
+                .Where(r => r.ApprovalHistories.Any(h => h.ApprovedById == managerId));
+
+            // Lọc theo trạng thái (nếu có chọn)
+            if (!string.IsNullOrEmpty(status) && status != "Tất cả")
+            {
+                approvedRequestsQuery = approvedRequestsQuery.Where(r => r.Status == status);
+            }
+
+            // Lọc theo ngày (nếu có chọn)
+            if (fromDate.HasValue)
+            {
+                approvedRequestsQuery = approvedRequestsQuery.Where(r => r.StartDate >= fromDate.Value);
+            }
+
+            if (toDate.HasValue)
+            {
+                approvedRequestsQuery = approvedRequestsQuery.Where(r => r.EndDate <= toDate.Value);
+            }
+
+            
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                approvedRequestsQuery = approvedRequestsQuery.Where(r =>
+                    r.Id.ToString().Contains(searchString) ||
+                    EF.Functions.Like(r.Reason, $"%{searchString}%"));
+            }
+
+            
+            var approvedRequests = await approvedRequestsQuery
+                .Select(r => new ListNghiPhepVM
                 {
-                    MaDon = "001",
-                    NgayBatDau = new DateTime(2024, 12, 1),
-                    NgayKetThuc = new DateTime(2024, 12, 3),
-                    SoNgay = 3,
-                    LyDo = "Nghỉ phép",
-                    TrangThai = "Đang chờ",
-                    TenTruongPhong = "Nguyễn Văn A",
-                    NgayXuLy = null,
-                    LyDoTuChoi = null
-                },
-                new ListNghiPhepVM
-                {
-                    MaDon = "002",
-                    NgayBatDau = new DateTime(2024, 11, 10),
-                    NgayKetThuc = new DateTime(2024, 11, 11),
-                    SoNgay = 2,
-                    LyDo = "Việc cá nhân",
-                    TrangThai = "Đã duyệt",
-                    TenTruongPhong = "Trần Thị B",
-                    NgayXuLy = new DateTime(2024, 11, 10),
-                    LyDoTuChoi = null
-                },
-                new ListNghiPhepVM
-                {
-                    MaDon = "003",
-                    NgayBatDau = new DateTime(2024, 11, 15),
-                    NgayKetThuc = new DateTime(2024, 11, 15),
-                    SoNgay = 1,
-                    LyDo = "Bệnh",
-                    TrangThai = "Từ chối",
-                    TenTruongPhong = "Phạm Văn C",
-                    NgayXuLy = new DateTime(2024, 11, 15),
-                    LyDoTuChoi = "Không phù hợp"
-                }
+                    MaDon = r.Id,
+                    NgayBatDau = r.StartDate,
+                    NgayKetThuc = r.EndDate,
+                    SoNgay = (r.EndDate - r.StartDate).Days + 1,
+                    LyDo = r.Reason,
+                    TrangThai = r.Status,
+                    TenNhanVien = r.Employee.FullName,
+                    NgayXuLy = r.UpdatedAt
+                }).ToListAsync();
+
+            return View(approvedRequests);
+        }
+
+        public async Task<IActionResult> ChiTiet(string maDon)
+        {
+            if (string.IsNullOrEmpty(maDon))
+            {
+                return NotFound();
+            }
+
+            var leaveRequest = await _context.LeaveRequest
+                .Include(r => r.Employee)
+                .FirstOrDefaultAsync(r => r.Id.ToString() == maDon);
+
+            if (leaveRequest == null)
+            {
+                return NotFound();
+            }
+
+            var model = new ListNghiPhepVM
+            {
+                MaDon = leaveRequest.Id,
+                NgayBatDau = leaveRequest.StartDate,
+                NgayKetThuc = leaveRequest.EndDate,
+                SoNgay = (leaveRequest.EndDate - leaveRequest.StartDate).Days + 1,
+                LyDo = leaveRequest.Reason,
+                TrangThai = leaveRequest.Status,
+                TenNhanVien = leaveRequest.Employee.FullName,
+                NgayXuLy = leaveRequest.UpdatedAt,
+                MaPhongBan = leaveRequest.DepartmentId
             };
 
-            return View(danhSach); // Truyền dữ liệu vào View
-        }
-        public IActionResult ChiTiet(string maDon)
-        {
-            // Dữ liệu mẫu (trong thực tế bạn sẽ truy vấn từ database)
-            var listNghiPhep = new List<ListNghiPhepVM>
-    {
-        new ListNghiPhepVM
-        {
-            MaDon = "001",
-            NgayBatDau = new DateTime(2024, 12, 1),
-            NgayKetThuc = new DateTime(2024, 12, 3),
-            SoNgay = 3,
-            LyDo = "Nghỉ phép",
-            TrangThai = "Đang chờ",
-            TenTruongPhong = "Nguyễn Văn A",
-            NgayXuLy = null,
-            LyDoTuChoi = null
-        },
-        new ListNghiPhepVM
-        {
-            MaDon = "002",
-            NgayBatDau = new DateTime(2024, 11, 10),
-            NgayKetThuc = new DateTime(2024, 11, 11),
-            SoNgay = 2,
-            LyDo = "Việc cá nhân",
-            TrangThai = "Đã duyệt",
-            TenTruongPhong = "Trần Thị B",
-            NgayXuLy = new DateTime(2024, 11, 10),
-            LyDoTuChoi = null
-        },
-        new ListNghiPhepVM
-        {
-            MaDon = "003",
-            NgayBatDau = new DateTime(2024, 11, 15),
-            NgayKetThuc = new DateTime(2024, 11, 15),
-            SoNgay = 1,
-            LyDo = "Bệnh",
-            TrangThai = "Từ chối",
-            TenTruongPhong = "Phạm Văn C",
-            NgayXuLy = new DateTime(2024, 11, 15),
-            LyDoTuChoi = "Không phù hợp"
+            return View(model);
         }
     };
 
-            // Tìm đơn nghỉ phép theo MaDon
-            var nghiPhep = listNghiPhep.FirstOrDefault(x => x.MaDon == maDon);
+          
 
-            if (nghiPhep == null)
-            {
-                return NotFound("Không tìm thấy đơn nghỉ phép.");
-            }
-
-            return View(nghiPhep); // Truyền dữ liệu sang View ChiTiet
-        }
-    }
 }

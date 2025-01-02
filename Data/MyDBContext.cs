@@ -110,6 +110,7 @@ namespace Web_DonNghiPhep.Data
         public DbSet<DepartmentEmployee> DepartmentEmployee { get; set; }
         public DbSet<LeaveBalance> LeaveBalance { get; set; }
         public DbSet<LeaveRequest> LeaveRequest { get; set; }
+        public DbSet<ApprovalHistory> ApprovalHistories { get; set; }
         public DbSet<Log> Log { get; set; }
     }
 }

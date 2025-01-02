@@ -12,22 +12,25 @@
             <p><strong>Ngày bắt đầu:</strong> @Model.NgayBatDau.ToString("dd/MM/yyyy")</p>
             <p><strong>Ngày kết thúc:</strong> @Model.NgayKetThuc.ToString("dd/MM/yyyy")</p>
             <p><strong>Số ngày:</strong> @Model.SoNgay</p>
-           
+            <p><strong>Lý do:</strong> @Model.LyDo</p>
         </div>
         <div class="col-md-6">
-            
             <p><strong>Trạng thái:</strong> @Model.TrangThai</p>
             <p><strong>Ngày xử lý:</strong> @(Model.NgayXuLy.HasValue ? Model.NgayXuLy.Value.ToString("dd/MM/yyyy") : "-")</p>
-            <p><strong>Tên trưởng phòng:</strong> @Model.TenTruongPhong</p>
+            <p><strong>Tên nhân viên:</strong> @Model.TenNhanVien</p>
+            <p><strong>Mã Phòng Ban:</strong> @Model.MaPhongBan</p>
         </div>
     </div>
     <div class="mt-4">
-        @if (Model.TrangThai == "Đang chờ")
-        {
-            <form method="post" asp-action="HuyDon" asp-controller="NghiPhep">
-                <input type="hidden" name="MaDon" value="@Model.MaDon" />
-            </form>
-        }
-        <a class="btn btn-secondary" asp-action="Index">Quay lại</a>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại danh sách</a>
     </div>
 </div>
+
+
+
+
+
+
+
+
+

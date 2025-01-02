@@ -7,40 +7,37 @@
 {
     <div class="alert alert-success">@TempData["Message"]</div>
 }
-<div class="container mt-4">
-    <h2 class="mb-4">Lịch sử nghỉ phép</h2>
-    <form method="get" class="mb-3 row">
-        <div class="col-md-3">
-            <label for="status" class="form-label">Trạng thái:</label>
-            <select id="status" name="status" class="form-select">
-                <option value="Tất cả">Tất cả</option>
-                <option value="Đang chờ">Đang chờ</option>
-                <option value="Đã duyệt">Đã duyệt</option>
-                <option value="Từ chối">Từ chối</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label for="fromDate" class="form-label">Từ ngày:</label>
-            <input type="date" id="fromDate" name="fromDate" class="form-control" />
-        </div>
-        <div class="col-md-3">
-            <label for="toDate" class="form-label">Đến ngày:</label>
-            <input type="date" id="toDate" name="toDate" class="form-control" />
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Lọc</button>
-        </div>
-    </form>
-
-    <form method="get" class="mb-3 row">
-        <div class="col-md-9">
-            <label for="search" class="form-label">Tìm kiếm:</label>
-            <input type="text" id="search" name="search" class="form-control" placeholder="Nhập mã đơn/Lý do" />
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-            <button type="submit" class="btn btn-secondary w-100">Tìm kiếm</button>
-        </div>
-    </form>
+@using (Html.BeginForm("Index", "ListDonDuyet", FormMethod.Get, new { @class = "row mb-3" }))
+{
+    <div class="col-md-3">
+        <label for="status" class="form-label">Trạng thái:</label>
+        @Html.DropDownList("status", new SelectList(new[] { "Tất cả", "Approved", "Rejected" }, "Tất cả"),
+                "Tất cả", new { @class = "form-select" })
+    </div>
+    <div class="col-md-3">
+        <label for="fromDate" class="form-label">Từ ngày:</label>
+        <input type="date" id="fromDate" name="fromDate" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label for="toDate" class="form-label">Đến ngày:</label>
+        <input type="date" id="toDate" name="toDate" class="form-control" />
+    </div>
+   
+    <div class="col-md-3 mt-3">
+        <button type="submit" class="btn btn-primary w-100">Lọc</button>
+    </div>
+}
+@using (Html.BeginForm("Index", "ListDonDuyet", FormMethod.Get, new { @class = "mb-3 row" }))
+{
+    <div class="col-md-9">
+        <label for="searchString" class="form-label">Tìm kiếm:</label>
+        @Html.TextBox("searchString", ViewBag.SearchString as string,
+                new { @class = "form-control", @id = "searchString", placeholder = "Nhập mã đơn/Lý do" })
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-secondary w-100">Tìm kiếm</button>
+    </div>
+}
 
     <table class="table table-bordered table-hover">
         <thead>
@@ -50,7 +47,7 @@
                 <th>Ngày kết thúc</th>
                 <th>Số ngày</th>
                 <th>Lý do</th>
-                <th>Tên trưởng phòng</th>
+                <th>Tên nhân viên</th>
                 <th>Ngày xử lý</th>
                 
                 <th>Hành động</th>
@@ -65,9 +62,9 @@
                     <td>@item.NgayKetThuc.ToString("dd/MM/yyyy")</td>
                     <td>@item.SoNgay</td>
                     <td>@item.LyDo</td>
-                    <td>@item.TenTruongPhong</td>
-                    <td>@(item.NgayXuLy.HasValue ? item.NgayXuLy.Value.ToString("dd/MM/yyyy") : "-")</td> 
-                    <td>
+                    <td>@item.TenNhanVien</td>
+                    <td>@(item.NgayXuLy.HasValue ? item.NgayXuLy.Value.ToString("dd/MM/yyyy") : "-")</td>
+                <td>
 
                         <a class="btn btn-info btn-sm" asp-action="ChiTiet" asp-controller="ListDonDuyet" asp-route-maDon="@item.MaDon">Chi tiết</a>
                     </td>

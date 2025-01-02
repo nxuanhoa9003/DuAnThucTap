@@ -272,54 +272,84 @@ namespace Web_DonNghiPhep.Controllers
 
             if (request == null) return NotFound();
 
-            var employeeid = User.FindFirst("Employeeid")?.Value;
+            var employeeId = User.FindFirst("Employeeid")?.Value;
+
+            
+            if (request.NextApproverId != null && request.NextApproverId != employeeId)
+            {
+                return Forbid(); 
+            }
+
+            string actionStatus = "";
+           
 
             if (action == "approve")
             {
-                var department = _context.Department.Include(x => x.Parent).FirstOrDefault(x => x.Department_id == request.DepartmentId);
+                var department = _context.Department.Include(x => x.Parent)
+                                    .FirstOrDefault(x => x.Department_id == request.DepartmentId);
 
                 if (request.NextApproverId != null)
                 {
-                    department = _context.Department.Include(x => x.Parent).FirstOrDefault(x => x.ManagerId == request.NextApproverId);
-
+                    department = _context.Department.Include(x => x.Parent)
+                                    .FirstOrDefault(x => x.ManagerId == request.NextApproverId);
                 }
 
                 if (department == null) return NotFound();
 
                 if (department.Parent != null)
                 {
+                    // Chuyển đơn lên quản lý cấp trên
                     request.NextApproverId = department.Parent.ManagerId;
+                    actionStatus = "Approved and Forwarded";
                 }
                 else
                 {
-                    request.ApprovedById = employeeid;
+                    // Đơn được duyệt cuối cùng
+                    request.ApprovedById = employeeId;
                     request.Status = "Approved";
-                    var leavebalance = _context.LeaveBalance.FirstOrDefault(x => x.Employee_id == request.Employee_id);
-                    
-                    if(leavebalance == null) return NotFound();
-                    
-                    var dayoff = (request.EndDate - request.StartDate).Days + 1;
-                    leavebalance.UsedDays += dayoff;
-                    leavebalance.RemainingDays = leavebalance.RemainingDays == 0 ? 0 : leavebalance.TotalDays - leavebalance.UsedDays;
-                    _context.Update(leavebalance);
+
+                    // Cập nhật Leave Balance (số ngày nghỉ)
+                    var leaveBalance = _context.LeaveBalance.FirstOrDefault(x => x.Employee_id == request.Employee_id);
+
+                    if (leaveBalance == null) return NotFound();
+
+                    var dayOff = (request.EndDate - request.StartDate).Days + 1;
+                    leaveBalance.UsedDays += dayOff;
+                    leaveBalance.RemainingDays = leaveBalance.RemainingDays == 0 ? 0 : leaveBalance.TotalDays - leaveBalance.UsedDays;
+                    _context.Update(leaveBalance);
+
+                    actionStatus = "Approved";
                 }
-
-
             }
             else if (action == "reject")
             {
+                // Xử lý khi đơn bị từ chối
                 request.Status = "Rejected";
-                request.ApprovedById = employeeid;
+                request.ApprovedById = employeeId;
                 request.NextApproverId = null;
+                actionStatus = "Rejected";
+               
             }
+            request.UpdatedAt = DateTime.Now;
             _context.Update(request);
+
+            var history = new ApprovalHistory
+            {
+                LeaveRequestId = request.Id,
+                ApprovedById = employeeId,
+                Action = actionStatus,
+                ProcessedAt = DateTime.Now
+            };
+            _context.ApprovalHistories.Add(history);
+
             await _context.SaveChangesAsync();
             _messageService.SetMessage("Đã xác nhận đơn nghỉ phép");
             return RedirectToAction("ApproveRequests");
         }
-
-
-
        
+
+
+
+
     }
 }

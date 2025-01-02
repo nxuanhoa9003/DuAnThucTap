@@ -61,5 +61,6 @@ namespace Web_DonNghiPhep.Models
         public virtual Employee? ApprovedBy { get; set; }
         public virtual Employee? NextApprover { get; set; }
         public virtual Department? Department { get; set; }
+        public ICollection<ApprovalHistory> ApprovalHistories { get; set; }
     }
 }
