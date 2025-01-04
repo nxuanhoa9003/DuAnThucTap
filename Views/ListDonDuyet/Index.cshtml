@@ -1,0 +1,75 @@
+﻿@model IEnumerable<Web_DonNghiPhep.ViewModels.ListNghiPhepVM>
+
+@{
+    ViewData["Title"] = "Lịch sử nghỉ phép";
+}
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success">@TempData["Message"]</div>
+}
+@using (Html.BeginForm("Index", "ListDonDuyet", FormMethod.Get, new { @class = "row mb-3" }))
+{
+    <div class="col-md-3">
+        <label for="status" class="form-label">Trạng thái:</label>
+        @Html.DropDownList("status", new SelectList(new[] { "Tất cả", "Approved", "Rejected" }, "Tất cả"),
+                "Tất cả", new { @class = "form-select" })
+    </div>
+    <div class="col-md-3">
+        <label for="fromDate" class="form-label">Từ ngày:</label>
+        <input type="date" id="fromDate" name="fromDate" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label for="toDate" class="form-label">Đến ngày:</label>
+        <input type="date" id="toDate" name="toDate" class="form-control" />
+    </div>
+   
+    <div class="col-md-3 mt-3">
+        <button type="submit" class="btn btn-primary w-100">Lọc</button>
+    </div>
+}
+@using (Html.BeginForm("Index", "ListDonDuyet", FormMethod.Get, new { @class = "mb-3 row" }))
+{
+    <div class="col-md-9">
+        <label for="searchString" class="form-label">Tìm kiếm:</label>
+        @Html.TextBox("searchString", ViewBag.SearchString as string,
+                new { @class = "form-control", @id = "searchString", placeholder = "Nhập mã đơn/Lý do" })
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-secondary w-100">Tìm kiếm</button>
+    </div>
+}
+
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Mã đơn</th>
+                <th>Ngày bắt đầu</th>
+                <th>Ngày kết thúc</th>
+                <th>Số ngày</th>
+                <th>Lý do</th>
+                <th>Tên nhân viên</th>
+                <th>Ngày xử lý</th>
+                
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.MaDon</td>
+                    <td>@item.NgayBatDau.ToString("dd/MM/yyyy")</td>
+                    <td>@item.NgayKetThuc.ToString("dd/MM/yyyy")</td>
+                    <td>@item.SoNgay</td>
+                    <td>@item.LyDo</td>
+                    <td>@item.TenNhanVien</td>
+                    <td>@(item.NgayXuLy.HasValue ? item.NgayXuLy.Value.ToString("dd/MM/yyyy") : "-")</td>
+                <td>
+
+                        <a class="btn btn-info btn-sm" asp-action="ChiTiet" asp-controller="ListDonDuyet" asp-route-maDon="@item.MaDon">Chi tiết</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

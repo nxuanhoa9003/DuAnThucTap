@@ -53,7 +53,7 @@ namespace Web_DonNghiPhep.Controllers
             }
             var emp = _context.DepartmentEmployee.Where(x => x.DepartmentId == id && x.EmployeeIsManager == true).Select(x => x.Employee).FirstOrDefault();
             string? managername = emp?.FullName;
-            var department = await _context.Department.Include(x => x.DepartmentEmployees)
+            var department = await _context.Department.Include(x => x.Parent).Include(x => x.DepartmentEmployees)
                 .Select(x => new DepartmentVM
                 {
                     Department_id = x.Department_id,
@@ -83,8 +83,22 @@ namespace Web_DonNghiPhep.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost("tao-moi-phong-ban")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Department_id,DepartmentName, ParentId")] Department department)
+        public async Task<IActionResult> Create([Bind("Department_id,DepartmentName,ParentId")] Department department)
         {
+            if (!string.IsNullOrEmpty(department.ParentId))
+            {
+                var parentDepartment = await _context.Department
+                    .FirstOrDefaultAsync(d => d.Department_id == department.ParentId);
+
+                if (parentDepartment == null)
+                {
+                    ModelState.AddModelError("ParentId", "Phòng ban cấp trên không tồn tại.");
+                }
+            }
+            else
+            {
+                department.ParentId = null; // Xử lý trường hợp không có cấp trên
+            }
             if (ModelState.IsValid)
             {
                 _context.Add(department);
@@ -142,8 +156,6 @@ namespace Web_DonNghiPhep.Controllers
                     department.UpdatedAt = DateTime.Now;
                     if(dpcurrent.ManagerId != department.ManagerId)
                     {
-                      
-
                         var dpemcurrent = _context.DepartmentEmployee.FirstOrDefault(x => x.DepartmentId == dpcurrent.Department_id && x.EmployeeId == dpcurrent.ManagerId);
 
                         if (dpemcurrent != null)
@@ -160,10 +172,20 @@ namespace Web_DonNghiPhep.Controllers
                             _context.Update(dpemexist);
                         }
 
-                        dpcurrent.ManagerId = department.ManagerId;
-                        _context.Update(dpcurrent);
+                        var listrequest = _context.LeaveRequest.Where(x => x.Status == "Pending" && x.NextApproverId == dpcurrent.ManagerId).ToList();
 
+                        dpcurrent.ManagerId = department.ManagerId;
+
+                        var newmanagerdepartment = department.ManagerId;
+                        foreach (var request in listrequest)
+                        {
+                            request.NextApproverId = newmanagerdepartment;
+                            _context.Update(request);
+                        }
                     }
+
+                    dpcurrent.ParentId = department.ParentId;
+                    _context.Update(dpcurrent);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)

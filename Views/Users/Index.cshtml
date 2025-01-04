@@ -1,4 +1,5 @@
-﻿@model IEnumerable<Web_DonNghiPhep.ViewModels.EmployeeVM>
+﻿@using System.Security.Claims
+@model IEnumerable<Web_DonNghiPhep.ViewModels.EmployeeVM>
 
 @{
     ViewData["Title"] = "Index";
@@ -69,7 +70,11 @@
                 <td>
                     <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.Employee_ID">Sửa</a>
                     <a class="btn btn-info" asp-action="Details" asp-route-id="@item.Employee_ID">Chi tiết</a>
-                    <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Employee_ID">Xoá</a>
+                    @if (!item.Roles_Name.Contains("Admin") && item.Roles_Name.Count >= 1)
+                    {
+                        <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Employee_ID">Xoá</a>
+                    }
+
                 </td>
             </tr>
         }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Web_DonNghiPhep.Data;
 
@@ -11,9 +12,11 @@ using Web_DonNghiPhep.Data;
 namespace Web_DonNghiPhep.Migrations
 {
     [DbContext(typeof(MyDBContext))]
-    partial class MyDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250101164918_UpdateDB_V9")]
+    partial class UpdateDB_V9
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,9 +41,6 @@ namespace Web_DonNghiPhep.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Employee_ID")
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<int>("LeaveRequestId")
                         .HasColumnType("int");
 
@@ -48,8 +48,6 @@ namespace Web_DonNghiPhep.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Employee_ID");
 
                     b.HasIndex("LeaveRequestId");
 
@@ -335,17 +333,11 @@ namespace Web_DonNghiPhep.Migrations
 
             modelBuilder.Entity("Web_DonNghiPhep.Models.ApprovalHistory", b =>
                 {
-                    b.HasOne("Web_DonNghiPhep.Models.Employee", "Employee")
-                        .WithMany("ApprovalHistories")
-                        .HasForeignKey("Employee_ID");
-
                     b.HasOne("Web_DonNghiPhep.Models.LeaveRequest", "LeaveRequest")
                         .WithMany("ApprovalHistories")
                         .HasForeignKey("LeaveRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Employee");
 
                     b.Navigation("LeaveRequest");
                 });
@@ -406,8 +398,7 @@ namespace Web_DonNghiPhep.Migrations
 
                     b.HasOne("Web_DonNghiPhep.Models.Department", "Department")
                         .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("DepartmentId");
 
                     b.HasOne("Web_DonNghiPhep.Models.Employee", "Employee")
                         .WithMany("LeaveRequests")
@@ -477,8 +468,6 @@ namespace Web_DonNghiPhep.Migrations
 
             modelBuilder.Entity("Web_DonNghiPhep.Models.Employee", b =>
                 {
-                    b.Navigation("ApprovalHistories");
-
                     b.Navigation("ApprovedLeaveRequests");
 
                     b.Navigation("DepartmentEmployees");

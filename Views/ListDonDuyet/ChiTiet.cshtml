@@ -1,0 +1,36 @@
+﻿@model Web_DonNghiPhep.ViewModels.ListNghiPhepVM
+
+@{
+    ViewData["Title"] = "Chi tiết đơn nghỉ phép";
+}
+
+<div class="container mt-4">
+    <h2>Chi tiết đơn nghỉ phép</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <p><strong>Mã đơn:</strong> @Model.MaDon</p>
+            <p><strong>Ngày bắt đầu:</strong> @Model.NgayBatDau.ToString("dd/MM/yyyy")</p>
+            <p><strong>Ngày kết thúc:</strong> @Model.NgayKetThuc.ToString("dd/MM/yyyy")</p>
+            <p><strong>Số ngày:</strong> @Model.SoNgay</p>
+            <p><strong>Lý do:</strong> @Model.LyDo</p>
+        </div>
+        <div class="col-md-6">
+            <p><strong>Trạng thái:</strong> @Model.TrangThai</p>
+            <p><strong>Ngày xử lý:</strong> @(Model.NgayXuLy.HasValue ? Model.NgayXuLy.Value.ToString("dd/MM/yyyy") : "-")</p>
+            <p><strong>Tên nhân viên:</strong> @Model.TenNhanVien</p>
+            <p><strong>Mã Phòng Ban:</strong> @Model.MaPhongBan</p>
+        </div>
+    </div>
+    <div class="mt-4">
+        <a asp-action="Index" class="btn btn-secondary">Quay lại danh sách</a>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+

@@ -9,10 +9,9 @@ namespace Web_DonNghiPhep.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        // ID của người dùng yêu cầu nghỉ phép.
         [Required]
         [Display(Name = "Nhân viên")]
-        public string Employee_id { get; set; } 
+        public string? Employee_id { get; set; } 
 
         [Required]
         [DataType(DataType.Date)]
@@ -61,5 +60,6 @@ namespace Web_DonNghiPhep.Models
         public virtual Employee? ApprovedBy { get; set; }
         public virtual Employee? NextApprover { get; set; }
         public virtual Department? Department { get; set; }
+        public ICollection<ApprovalHistory>? ApprovalHistories { get; set; }
     }
 }

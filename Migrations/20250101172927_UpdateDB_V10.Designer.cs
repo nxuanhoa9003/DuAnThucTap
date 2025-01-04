@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Web_DonNghiPhep.Data;
 
@@ -11,9 +12,11 @@ using Web_DonNghiPhep.Data;
 namespace Web_DonNghiPhep.Migrations
 {
     [DbContext(typeof(MyDBContext))]
-    partial class MyDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250101172927_UpdateDB_V10")]
+    partial class UpdateDB_V10
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,11 +34,9 @@ namespace Web_DonNghiPhep.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Action")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ApprovedById")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Employee_ID")
@@ -336,7 +337,7 @@ namespace Web_DonNghiPhep.Migrations
             modelBuilder.Entity("Web_DonNghiPhep.Models.ApprovalHistory", b =>
                 {
                     b.HasOne("Web_DonNghiPhep.Models.Employee", "Employee")
-                        .WithMany("ApprovalHistories")
+                        .WithMany("ApprovalHistory")
                         .HasForeignKey("Employee_ID");
 
                     b.HasOne("Web_DonNghiPhep.Models.LeaveRequest", "LeaveRequest")
@@ -406,8 +407,7 @@ namespace Web_DonNghiPhep.Migrations
 
                     b.HasOne("Web_DonNghiPhep.Models.Department", "Department")
                         .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("DepartmentId");
 
                     b.HasOne("Web_DonNghiPhep.Models.Employee", "Employee")
                         .WithMany("LeaveRequests")
@@ -477,7 +477,7 @@ namespace Web_DonNghiPhep.Migrations
 
             modelBuilder.Entity("Web_DonNghiPhep.Models.Employee", b =>
                 {
-                    b.Navigation("ApprovalHistories");
+                    b.Navigation("ApprovalHistory");
 
                     b.Navigation("ApprovedLeaveRequests");
 
