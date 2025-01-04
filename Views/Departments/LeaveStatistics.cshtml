@@ -1,0 +1,50 @@
+﻿
+
+<h2>Thống kê ngày nghỉ của nhân viên</h2>
+
+<form method="get">
+    <label for="departmentFilter">Lọc theo phòng ban:</label>
+    <select id="departmentFilter" name="departmentId">
+        <option value="">Chọn phòng ban</option>
+        <option value="1">Phòng Nhân sự</option>
+        <option value="2">Phòng Kỹ thuật</option>
+        <option value="3">Phòng Kinh doanh</option>
+    </select>
+    <button type="submit" class="btn btn-primary">Lọc</button>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Mã nhân viên</th>
+            <th>Tên nhân viên</th>
+            <th>Phòng ban</th>
+            <th>Số ngày nghỉ phép còn lại</th>
+            <th>Số ngày nghỉ phép đã dùng</th>
+        </tr>
+    <tbody>
+        </thead>
+        <tr>
+            <td>1</td>
+            <td>NV001</td>
+            <td>Nguyễn Văn A</td>
+            <td>Nhân sự</td>
+            <td>10</td>
+            <td>5</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>NV002</td>
+            <td>Trần Thị B</td>
+            <td>Kỹ thuật</td>
+            <td>8</td>
+            <td>7</td>
+        </tr>
+    </tbody>
+</table>
+
+<div>
+    <button type="button" class="btn btn-primary">Xuất Excel</button>
+    <button type="button" class="btn btn-danger">Xuất PDF</button>
+</div>
