@@ -56,6 +56,14 @@
 
     @await RenderSectionAsync("Scripts", required: false)
     <script>
+        
+        $('form').submit(function () {
+            $('input').each(function () {
+                $(this).val($.trim($(this).val())); // Trim dữ liệu trước khi submit
+            });
+        });
+
+
         setTimeout(function () {
             $(".alert").alert("close");
         }, 3000);

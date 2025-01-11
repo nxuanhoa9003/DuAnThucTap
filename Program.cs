@@ -20,7 +20,9 @@ namespace Web_DonNghiPhep
             {
                 option.UseSqlServer(builder.Configuration.GetConnectionString("MyDB"));
             });
-               builder.Services.AddSignalR();
+
+            builder.Services.AddSignalR();
+            
             builder.Services.AddDistributedMemoryCache();
 
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -38,11 +40,11 @@ namespace Web_DonNghiPhep
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
               .AddCookie(options =>
               {
-                  options.LoginPath = "/dang-nhap";  
-                  options.LogoutPath = "/dang-xuat"; 
+                  options.LoginPath = "/dang-nhap";
+                  options.LogoutPath = "/dang-xuat";
                   options.AccessDeniedPath = "/AccessDenied";
               });
-            
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -52,7 +54,7 @@ namespace Web_DonNghiPhep
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-          
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseSession();
@@ -62,11 +64,11 @@ namespace Web_DonNghiPhep
 
             app.UseAuthentication();
             app.UseAuthorization();
-                app.MapHub<NotificationsHub>("/notificationHub");
+            app.MapHub<NotificationsHub>("/notificationHub");
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
-         
+
             app.Run();
         }
     }

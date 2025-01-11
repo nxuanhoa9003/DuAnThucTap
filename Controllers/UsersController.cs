@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Security.Claims;
 using Web_DonNghiPhep.Data;
 using Web_DonNghiPhep.Models;
@@ -51,69 +52,87 @@ namespace Web_DonNghiPhep.Controllers
         public async Task<IActionResult> Login([Bind("UserName,Password")] UserVM uservm)
         {
 
-            var user = await _context.User
-                                .Include(x => x.UserRoles)
-                                    .ThenInclude(x => x.Role)
-                                .Include(x => x.EmployeeUs)
-                                .SingleOrDefaultAsync(x => x.UserName.Equals(uservm.UserName) && x.Password.Equals(uservm.Password));
-            if (user == null)
+            if (ModelState.IsValid)
             {
-                _messageService.SetMessage("Đăng nhập thất bại", "error");
-                return View();
-            }
-            else
-            {
-                if (user.Status)
+
+                var user = await _context.User
+                                    .Include(x => x.UserRoles)
+                                        .ThenInclude(x => x.Role)
+                                    .Include(x => x.EmployeeUs)
+                                    .Where(x =>
+                                        x.UserName.Equals(uservm.UserName)
+                                        
+                                     )
+                                    .FirstOrDefaultAsync();
+
+
+                if (user == null)
+                {
+                    _messageService.SetMessage("Tên đăng nhập không đúng", "error");
+                    return View();
+                }
+
+                if (!user.UserName.Equals(uservm.UserName))
+                {
+                    _messageService.SetMessage("Tên đăng nhập không đúng", "error");
+                    return View();
+                }
+
+
+
+                if (!user.Password.Equals(uservm.Password)) // Thực tế nên mã hóa mật khẩu
+                {
+                    _messageService.SetMessage("Mật khẩu không đúng", "error");
+                    return View();
+                }
+                if (!user.Status)
+                {
+                    _messageService.SetMessage("Tài khoản của bạn bị khoá", "warning");
+                    return RedirectToAction("Login");
+                }
+
+                var claims = new List<Claim>
+                         {
+                            new Claim("Employeeid", user.Employee_ID),
+                            new Claim("FullName", user.EmployeeUs.FullName)
+                         };
+                claims.AddRange(user.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role.Role_Name.ToLower())));
+
+                var department = _context.Department.FirstOrDefault(x => x.ManagerId == user.Employee_ID);
+
+                // Tạo ClaimsIdentity (Danh tính người dùng)
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                // Đăng nhập và lưu thông tin người dùng trong cookie
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity));
+
+                // Cập nhật HttpContext.User để kiểm tra ngay trong request
+                HttpContext.User = new ClaimsPrincipal(claimsIdentity);
+
+                _messageService.SetMessage("Đăng nhập thành công");
+
+                if (User.IsInRole("admin"))
                 {
 
-
-                    var claims = new List<Claim>
-                     {
-                        new Claim("Employeeid", user.Employee_ID),
-                         new Claim("FullName", user.EmployeeUs.FullName)
-                     };
-                    claims.AddRange(user.UserRoles.Select(ur => new Claim(ClaimTypes.Role, ur.Role.Role_Name.ToLower())));
-
-                    var department = _context.Department.FirstOrDefault(x => x.ManagerId == user.Employee_ID);
-
-                    // Tạo ClaimsIdentity (Danh tính người dùng)
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                    // Đăng nhập và lưu thông tin người dùng trong cookie
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
-                        new ClaimsPrincipal(claimsIdentity));
-
-                    // Cập nhật HttpContext.User để kiểm tra ngay trong request
-                    HttpContext.User = new ClaimsPrincipal(claimsIdentity);
-
-                    _messageService.SetMessage("Đăng nhập thành công");
-
-                    if (User.IsInRole("admin"))
-                    {
-
-                        return RedirectToAction("Index");
-                    }
-                    else
-                    {
-                        var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-                        if (roles.Count == 1 && roles[0] == "quản lý") // Kiểm tra chỉ có một vai trò và vai trò đó là "quản lý"
-                        {
-                            return RedirectToAction("ApproveRequests", "LeaveRequests");
-                        }
-                        else
-                        {
-                            return RedirectToAction("Index", "LeaveRequests");
-                        }
-
-                    }
+                    return RedirectToAction("Index");
                 }
                 else
                 {
-                    _messageService.SetMessage("Tài khoản của bạn bị khoá", "warning");
-                    return RedirectToAction("login");
+                    var roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+                    if (roles.Count == 1 && roles[0] == "quản lý") // Kiểm tra chỉ có một vai trò và vai trò đó là "quản lý"
+                    {
+                        return RedirectToAction("ApproveRequests", "LeaveRequests");
+                    }
+                    else
+                    {
+                        return RedirectToAction("Index", "LeaveRequests");
+                    }
                 }
-
             }
+
+            return View(uservm);
+
         }
 
         [HttpPost("/dang-xuat")]
@@ -218,10 +237,8 @@ namespace Web_DonNghiPhep.Controllers
             if (ModelState.IsValid)
             {
                 check = true;
-
                 var existingEmployee = await _context.Employee
-                    .FirstOrDefaultAsync(x => x.Employee_ID.ToLower() == evm.Employee_ID.Trim().ToLower());
-
+                    .FirstOrDefaultAsync(x => x.Employee_ID == evm.Employee_ID);
 
                 if (existingEmployee != null)
                 {
@@ -231,7 +248,7 @@ namespace Web_DonNghiPhep.Controllers
 
                 var existingUser = await _context.Employee
                    .Include(x => x.User)
-                   .FirstOrDefaultAsync(x => x.User.UserName.ToLower() == evm.UserName.Trim().ToLower());
+                   .FirstOrDefaultAsync(x => x.User.UserName.ToLower() == evm.UserName.ToLower());
 
                 if (existingUser != null)
                 {
@@ -240,7 +257,7 @@ namespace Web_DonNghiPhep.Controllers
 
                 }
 
-                if (evm.UserName.Equals(evm.Password))
+                if (evm.UserName!.Equals(evm.Password!))
                 {
                     check = false;
                     ModelState.AddModelError("Password", "Mật khẩu không được giống tên đăng nhập");
@@ -379,13 +396,13 @@ namespace Web_DonNghiPhep.Controllers
             {
 
                 var isUserNameDuplicate = await _context.User
-                    .AnyAsync(u => u.UserName.ToLower() == evm.UserName.Trim().ToLower() && u.Employee_ID != evm.Employee_ID);
+                    .AnyAsync(u => u.UserName.ToLower() == evm.UserName!.Trim().ToLower() && u.Employee_ID != evm.Employee_ID);
 
                 if (isUserNameDuplicate)
                 {
                     ModelState.AddModelError("UserName", "Tên đăng nhập đã tồn tại");
                 }
-                else if (evm.UserName.Equals(evm.Password))
+                else if (evm.UserName!.Equals(evm.Password))
                 {
                     ModelState.AddModelError("Password", "Mật khẩu không được giống tên đăng nhập");
                 }
@@ -527,16 +544,21 @@ namespace Web_DonNghiPhep.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(string id)
         {
-            var user = await _context.User.Include(x => x.EmployeeUs).FirstOrDefaultAsync(x => x.Employee_ID == id);
+            //var user = await _context.User.Include(x => x.EmployeeUs).FirstOrDefaultAsync(x => x.Employee_ID == id);
+            var user = await _context.User
+                .Include(x => x.EmployeeUs)
+                .Include(x => x.UserRoles)
+                .ThenInclude(x => x.Role)
+                .FirstOrDefaultAsync(m => m.Employee_ID == id);
             if (user != null)
             {
                 var employee = user.EmployeeUs;
                 if (employee != null)
                 {
-
+                    _messageService.SetMessage("Không thể xoá tài khoản này", "warning");
+                    return View(user);
                     _context.User.Remove(user);
                     _context.Employee.Remove(employee);
-
                 }
             }
 

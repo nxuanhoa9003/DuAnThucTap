@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using Web_DonNghiPhep.Data;
+using Web_DonNghiPhep.Helpers;
 using Web_DonNghiPhep.Hubs;
 using Web_DonNghiPhep.Models;
 using Web_DonNghiPhep.Services;
@@ -72,14 +74,17 @@ namespace Web_DonNghiPhep.Controllers
             string strer = null;
             if (leaveRequest.StartDate < currentTime)
             {
+                _messageService.SetMessage("Không thể chọn ngày trong quá khứ", "error");
                 strer = "Ngày nghỉ không được nhỏ hơn ngày hiện tại";
             }
             else if (leaveRequest.EndDate < currentTime)
             {
+                _messageService.SetMessage("Không thể chọn ngày trong quá khứ", "error");
                 strer = "Ngày kết thúc nghỉ không được nhỏ hơn ngày hiện tại";
             }
             else if (leaveRequest.EndDate < leaveRequest.StartDate)
             {
+                _messageService.SetMessage("Ngày kết thúc nghỉ phải lớn hơn ngày bắt đầu nghỉ", "error");
                 strer = "Ngày kết thúc nghỉ phải lớn hơn ngày bắt đầu nghỉ";
             }
 
@@ -96,6 +101,44 @@ namespace Web_DonNghiPhep.Controllers
                 ModelState.AddModelError("", "Không thể xác định được mã nhân viên. Vui lòng đăng nhập lại.");
                 return View(leaveRequest);
             }
+
+            if (!Regex.IsMatch(leaveRequest.Reason, @"^[^!@#$%^&*()]*$"))
+            {
+                ModelState.AddModelError("Reason", "Lý do không được chứa các ký tự đặc biệt như !@#$%^&*()");
+            }
+
+
+            var warnings = new List<string>();
+
+            // Kiểm tra ngày cuối tuần
+            if (leaveRequest.StartDate.DayOfWeek == DayOfWeek.Saturday || leaveRequest.StartDate.DayOfWeek == DayOfWeek.Sunday)
+            {
+                warnings.Add("Ngày nghỉ trùng với cuối tuần");
+            }
+
+            if (leaveRequest.EndDate.DayOfWeek == DayOfWeek.Saturday || leaveRequest.EndDate.DayOfWeek == DayOfWeek.Sunday)
+            {
+                warnings.Add("Ngày kết thúc là ngày cuối tuần.");
+            }
+
+            // Kiểm tra ngày lễ
+            if (HolidayHelper.IsHoliday(leaveRequest.StartDate))
+            {
+                warnings.Add("Ngày bắt đầu là ngày lễ.");
+            }
+
+            if (HolidayHelper.IsHoliday(leaveRequest.EndDate))
+            {
+                warnings.Add("Ngày kết thúc là ngày lễ.");
+            }
+
+            if (warnings.Any())
+            {
+                var warningMessage = string.Join('\n', warnings);
+                ModelState.AddModelError("", warningMessage);
+                return View(leaveRequest);
+            }
+
 
             leaveRequest.Employee_id = employeeid;
 

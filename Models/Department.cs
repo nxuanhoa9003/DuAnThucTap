@@ -11,7 +11,7 @@ namespace Web_DonNghiPhep.Models
         public string? Department_id { get; set; }
 
         [Required]
-        [StringLength(100, MinimumLength = 5)]
+        [StringLength(50, MinimumLength = 5)]
         [Display(Name = "Tên phòng ban")]
         public string? DepartmentName { get; set; }
 

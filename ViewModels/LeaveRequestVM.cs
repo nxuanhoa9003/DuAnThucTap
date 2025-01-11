@@ -26,8 +26,8 @@ namespace Web_DonNghiPhep.ViewModels
         [Display(Name = "Nghỉ đến ngày")]
         public DateTime EndDate { get; set; }
 
-      
-        [StringLength(500)]
+        [MaxLength(500, ErrorMessage = "Lý do không được quá 500 ký tự")]
+        [MinLength(5, ErrorMessage = "Lý do nghỉ phép phải có ít nhất 5 ký tự!")]
         [Display(Name = "Lý do")]
         public string? Reason { get; set; }
 
