@@ -16,9 +16,8 @@
         </dd>
     </dl>
     
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Title_id" />
-        <input type="submit" value="Xoá" class="btn btn-danger" />
+    <form asp-action="Delete"  asp-route-id="@Model.Title_id">
+        <input type="submit" onclick="return confirm('Bạn có chắc chắn muốn xóa không?');" value="Xoá" class="btn btn-danger" />
         <a class="btn btn-secondary" asp-action="Index">Trở lại</a>
     </form>
 </div>

@@ -8,11 +8,14 @@ namespace Web_DonNghiPhep.Models
         [Key]
         [Required]
         [DisplayName("Mã chức danh")]
+        [StringLength(10)]
+        
         public string? Title_id { get; set; }
 
         [Required]
         [DisplayName("Tên chức danh")]
+        
         public string? Title_name { get; set; }
-        public ICollection<Employee> Employees { get; set; }
+        public ICollection<Employee>? Employees { get; set; }
     }
 }

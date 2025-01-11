@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Web_DonNghiPhep.Data;
 using Web_DonNghiPhep.Models;
+using Web_DonNghiPhep.Services;
 
 namespace Web_DonNghiPhep.Controllers
 {
@@ -16,10 +17,13 @@ namespace Web_DonNghiPhep.Controllers
     public class TitlesController : Controller
     {
         private readonly MyDBContext _context;
+        private readonly IMessageService _messageService;
 
-        public TitlesController(MyDBContext context)
+        public TitlesController(MyDBContext context, IMessageService messageService)
         {
             _context = context;
+            _messageService = messageService;
+
         }
 
         // GET: Titles
@@ -62,12 +66,27 @@ namespace Web_DonNghiPhep.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Title_id,Title_name")] Titles title)
         {
+
             if (ModelState.IsValid)
             {
+                if (await _context.Title.AnyAsync(x => x.Title_id == title.Title_id!.Trim()))
+                {
+                    ModelState.AddModelError("Title_id", "Mã chức danh đã tồn tại");
+                    return View(title);
+                }
+
+                if (await _context.Title.AnyAsync(x => x.Title_name == title.Title_name!.Trim()))
+                {
+                    ModelState.AddModelError("Title_name", "Tên chức danh đã tồn tại");
+                    return View(title);
+                }
+
                 _context.Add(title);
                 await _context.SaveChangesAsync();
+                _messageService.SetMessage("Thêm chức danh thành công");
                 return RedirectToAction(nameof(Index));
             }
+            
             return View(title);
         }
 
@@ -102,9 +121,22 @@ namespace Web_DonNghiPhep.Controllers
 
             if (ModelState.IsValid)
             {
+                var titlecurrent = await _context.Title.AsNoTracking().FirstOrDefaultAsync(x => x.Title_id == id);
+                if(titlecurrent == null)
+                {
+                    return NotFound();
+                }
+                
+                if (titlecurrent.Title_name != title.Title_name && await _context.Title.AnyAsync(x => x.Title_name == title.Title_name!.Trim()))
+                {
+                    ModelState.AddModelError("Title_name", "Tên chức danh đã tồn tại");
+                    return View(title);
+                }
+
                 try
                 {
                     _context.Update(title);
+                    _messageService.SetMessage("Cập nhật chức danh thành công");
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
@@ -120,6 +152,7 @@ namespace Web_DonNghiPhep.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            _messageService.SetMessage("Cập nhật chức danh thất bại");
             return View(title);
         }
 
@@ -150,6 +183,11 @@ namespace Web_DonNghiPhep.Controllers
             var titles = await _context.Title.FindAsync(id);
             if (titles != null)
             {
+                if(await _context.Employee.AnyAsync(x => x.Title_id == titles.Title_id))
+                {
+                    _messageService.SetMessage("Không thể xoá chức danh", "error");
+                    return RedirectToAction(nameof(Index));
+                }
                 _context.Title.Remove(titles);
             }
 

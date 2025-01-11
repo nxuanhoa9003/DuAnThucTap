@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Web_DonNghiPhep.Data;
 using Web_DonNghiPhep.Models;
+using Web_DonNghiPhep.Services;
 using Web_DonNghiPhep.ViewModels;
 
 namespace Web_DonNghiPhep.Controllers
@@ -17,10 +18,11 @@ namespace Web_DonNghiPhep.Controllers
     public class DepartmentsController : Controller
     {
         private readonly MyDBContext _context;
-
-        public DepartmentsController(MyDBContext context)
+        private readonly IMessageService _messageService;
+        public DepartmentsController(MyDBContext context, IMessageService messageService)
         {
             _context = context;
+            _messageService = messageService;
         }
 
         // GET: Departments
@@ -39,7 +41,8 @@ namespace Web_DonNghiPhep.Controllers
                     CreatedAt = x.CreatedAt,
                     UpdatedAt = x.UpdatedAt,
                 }).ToListAsync();
-            
+
+
             return View(listdepart);
         }
 
@@ -85,6 +88,9 @@ namespace Web_DonNghiPhep.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Department_id,DepartmentName,ParentId")] Department department)
         {
+            ViewBag.DepartmentParent = new SelectList(_context.Department.ToList(), "Department_id", "DepartmentName", "Department_id");
+
+
             if (!string.IsNullOrEmpty(department.ParentId))
             {
                 var parentDepartment = await _context.Department
@@ -101,12 +107,24 @@ namespace Web_DonNghiPhep.Controllers
             }
             if (ModelState.IsValid)
             {
+
+                if (_context.Department.Any(x => x.Department_id == department.Department_id!.Trim()))
+                {
+                    ModelState.AddModelError("Department_id", "Mã phòng ban đã tồn tại.");
+                    return View(department);
+                }
+
+                if (_context.Department.Any(x => x.DepartmentName == department.DepartmentName!.Trim()))
+                {
+                    ModelState.AddModelError("DepartmentName", "Tên phòng ban đã tồn tại.");
+                    return View(department);
+                }
+                _messageService.SetMessage("Tạo phòng ban thành công");
                 _context.Add(department);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            
-            ViewBag.DepartmentParent = new SelectList(_context.Department.ToList(), "Department_id", "DepartmentName", "Department_id");
+
             return View(department);
         }
 
@@ -126,11 +144,11 @@ namespace Web_DonNghiPhep.Controllers
             }
             ViewBag.DepartmentParent = new SelectList(_context.Department.Where(x => x.Department_id != department.Department_id).ToList(), "Department_id", "DepartmentName", department.ParentId);
 
-             var employeesInDepartment = await _context.DepartmentEmployee
-                .Where(de => de.DepartmentId == department.Department_id)
-                .Select(de => de.Employee)
-                .ToListAsync();
-         
+            var employeesInDepartment = await _context.DepartmentEmployee
+               .Where(de => de.DepartmentId == department.Department_id)
+               .Select(de => de.Employee)
+               .ToListAsync();
+
             ViewBag.Employee = new SelectList(employeesInDepartment, "Employee_ID", "FullName", department.ManagerId);
             return View(department);
         }
@@ -147,14 +165,35 @@ namespace Web_DonNghiPhep.Controllers
                 return NotFound();
             }
 
+
+            ViewBag.DepartmentParent = new SelectList(_context.Department.Where(x => x.Department_id != department.Department_id).ToList(), "Department_id", "DepartmentName", department.ParentId);
+
+            var employeesInDepartment = await _context.DepartmentEmployee
+                .Where(de => de.DepartmentId == department.Department_id)
+                .Select(de => de.Employee)
+                .ToListAsync();
+
+            ViewBag.Employee = new SelectList(employeesInDepartment, "Employee_ID", "FullName", department.ManagerId);
+
             if (ModelState.IsValid)
             {
                 try
                 {
+
                     var dpcurrent = await _context.Department.FirstOrDefaultAsync(d => d.Department_id == id);
+                    if (dpcurrent == null)
+                    {
+                        return NotFound();
+                    }
+                    if (dpcurrent.DepartmentName != department.DepartmentName && _context.Department.Any(x => x.DepartmentName == department.DepartmentName.Trim()))
+                    {
+                        ModelState.AddModelError("DepartmentName", "Tên phòng ban đã tồn tại.");
+                        return View(department);
+                    }
+
                     department.CreatedAt = dpcurrent.CreatedAt;
                     department.UpdatedAt = DateTime.Now;
-                    if(dpcurrent.ManagerId != department.ManagerId)
+                    if (dpcurrent.ManagerId != department.ManagerId)
                     {
                         var dpemcurrent = _context.DepartmentEmployee.FirstOrDefault(x => x.DepartmentId == dpcurrent.Department_id && x.EmployeeId == dpcurrent.ManagerId);
 
@@ -166,7 +205,7 @@ namespace Web_DonNghiPhep.Controllers
 
                         var dpemexist = _context.DepartmentEmployee.FirstOrDefault(x => x.DepartmentId == department.Department_id && x.EmployeeId == department.ManagerId);
 
-                        if(dpemexist != null)
+                        if (dpemexist != null)
                         {
                             dpemexist.EmployeeIsManager = true;
                             _context.Update(dpemexist);
@@ -183,7 +222,7 @@ namespace Web_DonNghiPhep.Controllers
                             _context.Update(request);
                         }
                     }
-
+                    _messageService.SetMessage("Cập nhật phòng ban thành công");
                     dpcurrent.ParentId = department.ParentId;
                     _context.Update(dpcurrent);
                     await _context.SaveChangesAsync();
@@ -201,14 +240,6 @@ namespace Web_DonNghiPhep.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewBag.DepartmentParent = new SelectList(_context.Department.Where(x => x.Department_id != department.Department_id).ToList(), "Department_id", "DepartmentName", department.ParentId);
-
-            var employeesInDepartment = await _context.DepartmentEmployee
-                .Where(de => de.DepartmentId == department.Department_id)
-                .Select(de => de.Employee)
-                .ToListAsync();
-
-            ViewBag.Employee = new SelectList(employeesInDepartment, "Employee_ID", "FullName", department.ManagerId);
             return View(department);
         }
 
@@ -221,7 +252,18 @@ namespace Web_DonNghiPhep.Controllers
                 return NotFound();
             }
 
-            var department = await _context.Department
+            //var department = await _context.Department
+            //    .FirstOrDefaultAsync(m => m.Department_id == id);
+            var emp = _context.DepartmentEmployee.Where(x => x.DepartmentId == id && x.EmployeeIsManager == true).Select(x => x.Employee).FirstOrDefault();
+            string? managername = emp?.FullName;
+            var department = await _context.Department.Include(x => x.Parent).Include(x => x.DepartmentEmployees)
+                .Select(x => new DepartmentVM
+                {
+                    Department_id = x.Department_id,
+                    DepartmentName = x.DepartmentName,
+                    Manager = managername,
+                    Parent = x.Parent != null ? x.Parent.DepartmentName : null
+                })
                 .FirstOrDefaultAsync(m => m.Department_id == id);
             if (department == null)
             {
@@ -236,14 +278,35 @@ namespace Web_DonNghiPhep.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(string id)
         {
-            var department = await _context.Department.FindAsync(id);
-            if (department != null)
+            
+            var emp = _context.DepartmentEmployee.Where(x => x.DepartmentId == id && x.EmployeeIsManager == true).Select(x => x.Employee).FirstOrDefault();
+            string? managername = emp?.FullName;
+            var departmentcurrent = await _context.Department.Include(x => x.Parent).Include(x => x.DepartmentEmployees)
+                .Select(x => new DepartmentVM
+                {
+                    Department_id = x.Department_id,
+                    DepartmentName = x.DepartmentName,
+                    Manager = managername,
+                    Parent = x.Parent != null ? x.Parent.DepartmentName : null
+                })
+                .FirstOrDefaultAsync(m => m.Department_id == id);
+
+            if (departmentcurrent != null)
             {
+                var department = await _context.Department.FindAsync(id);
+                if (_context.DepartmentEmployee.Any(x => x.DepartmentId == department.Department_id))
+                {
+                    _messageService.SetMessage("Không thể xoá phòng ban đang có nhân viên", "error");
+                    return View(departmentcurrent);
+
+                }
+                _messageService.SetMessage("Xoá thành công");
                 _context.Department.Remove(department);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
             }
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return View(departmentcurrent);
         }
 
         private bool DepartmentExists(string id)

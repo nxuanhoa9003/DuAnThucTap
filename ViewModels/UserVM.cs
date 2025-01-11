@@ -5,13 +5,11 @@ namespace Web_DonNghiPhep.ViewModels
 {
     public class UserVM
     {
-        [Required]
+        [Required(ErrorMessage = "Nhập tên đăng nhập")]
         [DisplayName("Tên đăng nhập")]
-        [StringLength(20, MinimumLength = 3)]
         public string? UserName { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Nhập mật khẩu")]
         [DisplayName("Mật khẩu")]
-        [StringLength(20, MinimumLength = 6)]
         public string? Password { get; set; }
     }
 }

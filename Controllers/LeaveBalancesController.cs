@@ -32,6 +32,7 @@ namespace Web_DonNghiPhep.Controllers
             var currentYear = DateTime.Now.Year;
             var years = Enumerable.Range(2000, currentYear - 2000 + 1).ToList(); // Từ 2000 đến năm hiện tại
             ViewBag.Years = years;
+            ViewBag.CurrentYear = currentYear;
             ViewBag.SelectedYear = yearselect;
 
             var employeeid = User.FindFirst("Employeeid")?.Value;
@@ -87,6 +88,11 @@ namespace Web_DonNghiPhep.Controllers
         // GET: LeaveBalances/Create
         public IActionResult Create()
         {
+
+            var currentYear = DateTime.Now.Year;
+            var years = Enumerable.Range(currentYear, 5).ToList(); // Từ 2000 đến năm hiện tại
+            ViewBag.Years = years;
+
             var employeeid = User.FindFirst("Employeeid")?.Value;
             var department = _context.Department.Include(x => x.Parent).SingleOrDefault(x => x.ManagerId == employeeid);
             if(department == null) return NotFound();
@@ -115,6 +121,11 @@ namespace Web_DonNghiPhep.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Year,TotalDays")] LeaveBalance leaveBalance, List<string> Employee_ids)
         {
+
+            var currentYear = DateTime.Now.Year;
+            var years = Enumerable.Range(currentYear, 5).ToList(); // Từ 2000 đến năm hiện tại
+            ViewBag.Years = years;
+
             var employeeid = User.FindFirst("Employeeid")?.Value;
             var department = _context.Department.SingleOrDefault(x => x.ManagerId == employeeid);
             if (department == null) return NotFound();
@@ -160,7 +171,7 @@ namespace Web_DonNghiPhep.Controllers
 
             if (ModelState.IsValid)
             {
-                var currentYear = DateTime.Now.Year;
+                //var currentYear = DateTime.Now.Year;
                 if (leaveBalance.Year < currentYear)
                 {
                     ModelState.AddModelError("", $"Năm cài đặt không được nhỏ hơn năm hiện tại");
@@ -252,8 +263,7 @@ namespace Web_DonNghiPhep.Controllers
 
                     existingLeaveBalance.Year = leaveBalance.Year;
                     existingLeaveBalance.TotalDays = leaveBalance.TotalDays;
-                    existingLeaveBalance.UsedDays = leaveBalance.UsedDays;
-                    existingLeaveBalance.RemainingDays = leaveBalance.TotalDays - leaveBalance.UsedDays;
+                    existingLeaveBalance.RemainingDays = existingLeaveBalance.TotalDays - existingLeaveBalance.UsedDays;
                     existingLeaveBalance.UpdatedAt = DateTime.Now;
 
                     _context.Update(existingLeaveBalance);

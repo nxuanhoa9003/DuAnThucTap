@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Index";
+    int currentyear = ViewBag.CurrentYear;
 }
 
 <h4>Cấu hình ngày nghỉ</h4>
@@ -74,7 +75,11 @@
                         @Html.DisplayFor(modelItem => item.UpdatedAt)
                     </td>
                     <td>
-                        <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.Id">Sửa</a>
+                        @if (item.Year >= currentyear)
+                        {
+                            <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.Id">Sửa</a>
+
+                        }
                     </td>
                 </tr>
             }

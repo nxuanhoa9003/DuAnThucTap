@@ -13,23 +13,35 @@
     <thead>
         <tr>
             <th>
+                @Html.DisplayNameFor(model => model.Title_id)
+            </th>
+            <th>
                 @Html.DisplayNameFor(model => model.Title_name)
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title_name)
-            </td>
-            <td>
-                <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.Title_id">Sửa</a>
-                 
-                <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Title_id">Xoá</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Title_id)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Title_name)
+                </td>
+                <td>
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.Title_id">Sửa</a>
+
+                        @* <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Title_id">Xoá</a> *@
+                        <form asp-action="Delete" asp-route-id="@item.Title_id">
+                            <input type="submit" onclick="return confirm('Bạn có chắc chắn muốn xóa không?');" value="Xoá" class="btn btn-danger" />
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
