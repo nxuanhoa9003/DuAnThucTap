@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using System.Drawing.Printing;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Web_DonNghiPhep.Data;
@@ -26,20 +27,33 @@ namespace Web_DonNghiPhep.Controllers
         {
             _context = context;
             _messageService = messageService;
-            _hubContext = hubContext;  
+            _hubContext = hubContext;
         }
 
         // GET: LeaveRequestsController
         [Authorize(Roles = "nhân viên")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? page = 1)
         {
+
             var employeeid = User.FindFirst("Employeeid")?.Value;
             var listlvrequest = await _context.LeaveRequest
                 .Include(x => x.ApprovedBy)
                 .Where(x => x.Employee_id == employeeid)
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
-            return View(listlvrequest);
+
+            int pageSize = 5;
+            int totalItems = listlvrequest.Count;
+
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var listrequetsrs = listlvrequest.Skip((page.Value - 1) * pageSize).Take(pageSize);
+
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+
+            return View(listrequetsrs.ToList());
         }
 
         // GET: LeaveRequestsController/Details/5
@@ -139,6 +153,13 @@ namespace Web_DonNghiPhep.Controllers
                 return View(leaveRequest);
             }
 
+            TimeSpan timefiff = leaveRequest.EndDate - leaveRequest.StartDate;
+            if (timefiff.Days > 12)
+            {
+                ModelState.AddModelError("", "Số ngày nghỉ không thể vượt quá 12 ngày!");
+                return View(leaveRequest);
+            }
+
 
             leaveRequest.Employee_id = employeeid;
 
@@ -222,21 +243,51 @@ namespace Web_DonNghiPhep.Controllers
         // GET: LeaveRequestsController/Delete/5
         public ActionResult Delete(int id)
         {
-            return View();
+            var request = _context.LeaveRequest.FirstOrDefault(x => x.Id == id);
+            if (request == null)
+            {
+                return NotFound();
+            }
+            return View(request);
         }
 
         // POST: LeaveRequestsController/Delete/5
-        [HttpPost]
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public async Task<ActionResult> DeleteConfirm(int Id)
         {
+
+            var request = _context.LeaveRequest.FirstOrDefault(x => x.Id == Id);
+            if (request == null)
+            {
+                return NotFound();
+            }
+
             try
             {
-                return RedirectToAction(nameof(Index));
+                var managerid = _context.Department.FirstOrDefault(x => x.Department_id == request.DepartmentId)?.ManagerId;
+                if (managerid == null)
+                {
+                    _messageService.SetMessage("Không xoá được", "error");
+                    return View(request);
+                }
+
+                if (managerid == request.NextApproverId && request.Status == "Pending")
+                {
+                    _context.LeaveRequest.Remove(request);
+                    await _context.SaveChangesAsync();
+                    _messageService.SetMessage("Xoá thành công");
+                    return RedirectToAction(nameof(Index));
+                }
+
+                _messageService.SetMessage("Không thể xoá đơn này", "error");
+                return View(request);
+
+
             }
             catch
             {
-                return View();
+                return View(request);
             }
         }
 
@@ -251,6 +302,8 @@ namespace Web_DonNghiPhep.Controllers
                 .Include(x => x.Employee)
                     .ThenInclude(x => x.DepartmentEmployees)
                     .ThenInclude(x => x.Department)
+                    .Where(x => x.NextApproverId == employeeid && x.Status == "Pending")
+                .OrderByDescending(x => x.CreatedAt)
                 .Select(x => new LeaveRequestVM
                 {
                     Id = x.Id,
@@ -262,8 +315,8 @@ namespace Web_DonNghiPhep.Controllers
                     TotalDayOff = (x.EndDate - x.StartDate).Days + 1,
                     NextApproverId = x.NextApproverId,
 
-                })
-                .Where(x => x.NextApproverId == employeeid && x.Status == "Pending");
+                });
+
 
             return View(await listrequests.ToListAsync());
         }
@@ -349,6 +402,7 @@ namespace Web_DonNghiPhep.Controllers
 
                 //THông báo đơn duyệt của bạn đã bị từ chối
                 await _hubContext.Clients.Group("Employee").SendAsync("ReceiveNotification", "Đơn nghỉ phép của bạn đã được phê duyệt.");
+                _messageService.SetMessage("Đã xác nhận đơn nghỉ phép");
             }
             else if (action == "reject")
             {
@@ -356,12 +410,13 @@ namespace Web_DonNghiPhep.Controllers
                 request.ApprovedById = employeeid;
                 request.NextApproverId = null;
                 await _hubContext.Clients.Group("Employee").SendAsync("ReceiveNotification", "Đơn nghỉ phép của bạn đã bị từ chối.");
-                
+                _messageService.SetMessage("Từ chối đơn nghỉ phép thành công");
                 actionStatus = "Rejected";
             }
 
             request.UpdatedAt = DateTime.Now;
             _context.Update(request);
+
             var history = new ApprovalHistory
             {
                 LeaveRequestId = request.Id,
@@ -369,12 +424,13 @@ namespace Web_DonNghiPhep.Controllers
                 Action = actionStatus,
                 ProcessedAt = DateTime.Now
             };
+
             _context.ApprovalHistories.Add(history);
 
 
             _context.Update(request);
             await _context.SaveChangesAsync();
-            _messageService.SetMessage("Đã xác nhận đơn nghỉ phép");
+
             return RedirectToAction("ApproveRequests");
         }
     }

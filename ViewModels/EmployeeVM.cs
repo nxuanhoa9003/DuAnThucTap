@@ -40,6 +40,7 @@ namespace Web_DonNghiPhep.ViewModels
         [Required]
         [DisplayName("Số điện thoại")]
         [Phone]
+        [RegularExpression(@"^(0\d{9})$", ErrorMessage = "Số điện thoại không hợp lệ.")]
         public string? PhoneNumber { get; set; }
 
         [DisplayName("Trạng thái tài khoản")]
