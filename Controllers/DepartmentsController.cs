@@ -165,7 +165,6 @@ namespace Web_DonNghiPhep.Controllers
                 return NotFound();
             }
 
-
             ViewBag.DepartmentParent = new SelectList(_context.Department.Where(x => x.Department_id != department.Department_id).ToList(), "Department_id", "DepartmentName", department.ParentId);
 
             var employeesInDepartment = await _context.DepartmentEmployee
@@ -223,7 +222,9 @@ namespace Web_DonNghiPhep.Controllers
                         }
                     }
                     _messageService.SetMessage("Cập nhật phòng ban thành công");
+
                     dpcurrent.ParentId = department.ParentId;
+
                     _context.Update(dpcurrent);
                     await _context.SaveChangesAsync();
                 }
@@ -278,7 +279,7 @@ namespace Web_DonNghiPhep.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(string id)
         {
-            
+
             var emp = _context.DepartmentEmployee.Where(x => x.DepartmentId == id && x.EmployeeIsManager == true).Select(x => x.Employee).FirstOrDefault();
             string? managername = emp?.FullName;
             var departmentcurrent = await _context.Department.Include(x => x.Parent).Include(x => x.DepartmentEmployees)

@@ -195,6 +195,8 @@ namespace Web_DonNghiPhep.Controllers
                     FullName = x.EmployeeUs.FullName,
                     Dob = x.EmployeeUs.Dob.Value,
                     Department_name = x.EmployeeUs.DepartmentEmployees.FirstOrDefault(z => z.EmployeeId == x.Employee_ID).Department.DepartmentName,
+                    PhoneNumber= x.EmployeeUs.PhoneNumber,
+                    Email= x.EmployeeUs.Email,
                     UserName = x.UserName,
                     Password = x.Password,
                     Title_name = x.EmployeeUs.Title.Title_name,
@@ -249,13 +251,28 @@ namespace Web_DonNghiPhep.Controllers
                 var existingUser = await _context.Employee
                    .Include(x => x.User)
                    .FirstOrDefaultAsync(x => x.User.UserName.ToLower() == evm.UserName.ToLower());
-
+                
                 if (existingUser != null)
                 {
                     check = false;
                     ModelState.AddModelError("UserName", "Tên đăng nhập đã tồn tại");
 
                 }
+
+                if(await _context.Employee.AnyAsync(x => x.PhoneNumber == evm.PhoneNumber))
+                {
+                    check = false;
+                    ModelState.AddModelError("PhoneNumber", "Số điện thoại đã tồn tại");
+
+                }
+
+                if (await _context.Employee.AnyAsync(x => x.Email == evm.Email))
+                {
+                    check = false;
+                    ModelState.AddModelError("Email", "Email đã tồn tại");
+
+                }
+
 
                 if (evm.UserName!.Equals(evm.Password!))
                 {
@@ -437,6 +454,16 @@ namespace Web_DonNghiPhep.Controllers
                                     };
 
                                     _context.DepartmentEmployee.Add(newDepartmentEmployee);
+
+                                }else
+                                {
+                                    var NewDepartmentEmployee = new DepartmentEmployee
+                                    {
+                                        DepartmentId = evm.Department_id,
+                                        EmployeeId = evm.Employee_ID
+                                    };
+
+                                    _context.DepartmentEmployee.Add(NewDepartmentEmployee);
 
                                 }
 
