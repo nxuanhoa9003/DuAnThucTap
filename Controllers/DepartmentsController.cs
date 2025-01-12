@@ -14,7 +14,7 @@ using Web_DonNghiPhep.ViewModels;
 namespace Web_DonNghiPhep.Controllers
 {
     [Authorize(Roles = "admin")]
-    [Route("phong-ban")]
+    //[Route("phong-ban")]
     public class DepartmentsController : Controller
     {
         private readonly MyDBContext _context;
@@ -313,6 +313,10 @@ namespace Web_DonNghiPhep.Controllers
         private bool DepartmentExists(string id)
         {
             return _context.Department.Any(e => e.Department_id == id);
+        }
+        public IActionResult LeaveStatistics()
+        {
+            return View();
         }
     }
 }
