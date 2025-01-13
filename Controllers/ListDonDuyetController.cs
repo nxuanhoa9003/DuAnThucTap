@@ -18,7 +18,7 @@ namespace Web_DonNghiPhep.Controllers
             _messageService = messageService;
         }
         // LỊCH SỬ ĐƠN DUYỆT
-        public async Task<IActionResult> Index(string searchString, string status, DateTime? fromDate, DateTime? toDate)
+        public async Task<IActionResult> Index(string searchString, string status, DateTime? fromDate, DateTime? toDate, int? page = 1)
         {
            
             var managerId = User.FindFirst("EmployeeId")?.Value;
@@ -34,21 +34,26 @@ namespace Web_DonNghiPhep.Controllers
                 .Include(r => r.ApprovalHistories)
                 .Where(r => r.ApprovalHistories.Any(h => h.ApprovedById == managerId));
 
+            List<string> listfilter = new List<string>();
+
             // Lọc theo trạng thái (nếu có chọn)
             if (!string.IsNullOrEmpty(status) && status != "Tất cả")
             {
                 approvedRequestsQuery = approvedRequestsQuery.Where(r => r.Status == status);
+                listfilter.Add("status=" + status);
             }
 
             // Lọc theo ngày (nếu có chọn)
             if (fromDate.HasValue)
             {
                 approvedRequestsQuery = approvedRequestsQuery.Where(r => r.StartDate >= fromDate.Value);
+                listfilter.Add("fromDate=" + fromDate.Value);
             }
 
             if (toDate.HasValue)
             {
                 approvedRequestsQuery = approvedRequestsQuery.Where(r => r.EndDate <= toDate.Value);
+                listfilter.Add("toDate=" + toDate.Value);
             }
 
             
@@ -57,7 +62,10 @@ namespace Web_DonNghiPhep.Controllers
                 approvedRequestsQuery = approvedRequestsQuery.Where(r =>
                     r.Id.ToString().Contains(searchString) ||
                     EF.Functions.Like(r.Reason, $"%{searchString}%"));
+
+                listfilter.Add("searchString=" + searchString);
             }
+
 
             
             var approvedRequests = await approvedRequestsQuery
@@ -76,6 +84,24 @@ namespace Web_DonNghiPhep.Controllers
             if(approvedRequests.Count  == 0)
             {
                 _messageService.SetMessage("Không tìm thấy đơn nào phù hợp", "warning");
+            }else
+            {
+                int pageSize = 5;
+                int totalItems = approvedRequests.Count;
+
+                int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+                var listapprovedRequestsrs = approvedRequests.Skip((page.Value - 1) * pageSize).Take(pageSize);
+
+                if(listfilter.Count > 0)
+                {
+                    string strfilter = string.Join("&", listfilter);
+                    ViewBag.Strfilter = strfilter;
+                }
+                
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                return View(listapprovedRequestsrs.ToList());
             }
 
             return View(approvedRequests);

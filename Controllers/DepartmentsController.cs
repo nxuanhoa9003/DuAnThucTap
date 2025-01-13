@@ -314,9 +314,35 @@ namespace Web_DonNghiPhep.Controllers
         {
             return _context.Department.Any(e => e.Department_id == id);
         }
-        public IActionResult LeaveStatistics()
+        public async Task<IActionResult> LeaveStatistics(int? yearselect, string? departmentId)
         {
-            return View();
+
+            var currentYear = DateTime.Now.Year;
+            var years = Enumerable.Range(2000, currentYear - 2000 + 1).ToList(); // Từ 2000 đến năm hiện tại
+
+            yearselect = yearselect ?? currentYear;
+
+            var departmentname = _context.Department.FirstOrDefault(x => x.Department_id == departmentId)?.DepartmentName;
+            var listempdp = _context.DepartmentEmployee.Where(x => x.DepartmentId == departmentId).Select(x => x.EmployeeId).ToList();
+            var listleavebance = await _context.LeaveBalance
+                .Include(x => x.Employee)
+                .Where(x => x.Year == yearselect && listempdp.Contains(x.Employee_id))
+                .Select(x => new LeaveStatisticsViewModel
+                {
+                    EmployeeId = x.Employee_id,
+                    EmployeeName = x.Employee.FullName,
+                    DepartmentName = departmentname,
+                    RemainingLeaveDays = x.RemainingDays,
+                    UsedLeaveDays = x.UsedDays
+                })
+                .ToListAsync();
+
+
+            ViewBag.Years = years;
+            ViewBag.CurrentYear = currentYear;
+            ViewBag.SelectedYear = yearselect;
+            ViewBag.Department = new SelectList(await _context.Department.ToListAsync(), "Department_id", "DepartmentName", departmentId);
+            return View(listleavebance);
         }
     }
 }

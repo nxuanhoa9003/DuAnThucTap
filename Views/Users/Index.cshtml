@@ -1,82 +1,90 @@
 ﻿@using System.Security.Claims
+@using Web_DonNghiPhep.ViewModels
 @model IEnumerable<Web_DonNghiPhep.ViewModels.EmployeeVM>
 
 @{
     ViewData["Title"] = "Index";
 }
 
-<h3>Tài khoản</h3>
+<div class="content-container">
+    <h3>Tài khoản</h3>
 
-<p>
-    <a class="btn btn-primary" asp-action="Create">Thêm mới</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Employee_ID)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FullName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UserName)
-            </th>
-            <th class="text-center">
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Department_name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Title_name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Roles_Name)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <th>
-                    @Html.DisplayFor(modelItem => item.Employee_ID)
-                </th>
-                <td>
-                    @Html.DisplayFor(modelItem => item.FullName)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.UserName)
-                </td>
+    <p>
+        <a class="btn btn-primary" asp-action="Create">Thêm mới</a>
+    </p>
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Employee_ID)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.FullName)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.UserName)
+                    </th>
+                    <th class="text-center">
+                        @Html.DisplayNameFor(model => model.Status)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Department_name)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Title_name)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Roles_Name)
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <th>
+                            @Html.DisplayFor(modelItem => item.Employee_ID)
+                        </th>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.FullName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.UserName)
+                        </td>
 
-                <td class="text-center">
-                    @{
-                        var statusClass = item.Status ? "bg-success" : "bg-danger";
-                        var statusText = item.Status ? "Active" : "Lock";
-                    }
-                    <span class="badge @statusClass">@statusText</span>
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Department_name)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Title_name)
-                </td>
-                <td>
-                    @string.Join(",", item.Roles_Name)
-                </td>
-                <td>
-                    <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.Employee_ID">Sửa</a>
-                    <a class="btn btn-info" asp-action="Details" asp-route-id="@item.Employee_ID">Chi tiết</a>
-                    @if (!item.Roles_Name.Contains("Admin") && item.Roles_Name.Count >= 1)
-                    {
-                        <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Employee_ID">Xoá</a>
-                    }
+                        <td class="text-center">
+                            @{
+                                var statusClass = item.Status ? "bg-success" : "bg-danger";
+                                var statusText = item.Status ? "Active" : "Lock";
+                            }
+                            <span class="badge @statusClass">@statusText</span>
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Department_name)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Title_name)
+                        </td>
+                        <td>
+                            @string.Join(",", item.Roles_Name)
+                        </td>
+                        <td>
+                            <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.Employee_ID">Sửa</a>
+                            <a class="btn btn-info" asp-action="Details" asp-route-id="@item.Employee_ID">Chi tiết</a>
+                            @if (!item.Roles_Name.Contains("Admin") && item.Roles_Name.Count >= 1)
+                            {
+                                <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Employee_ID">Xoá</a>
+                            }
 
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="pagination-container">
+        <partial name="_PagingPartial" model="new PagingViewModel { CurrentPage = ViewBag.CurrentPage, TotalPages = ViewBag.TotalPages }" />
+    </div>
+</div>

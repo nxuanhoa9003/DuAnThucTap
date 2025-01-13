@@ -1,4 +1,5 @@
-﻿@model IEnumerable<Web_DonNghiPhep.ViewModels.ListNghiPhepVM>
+﻿@using Web_DonNghiPhep.ViewModels
+@model IEnumerable<Web_DonNghiPhep.ViewModels.ListNghiPhepVM>
 
 @{
     ViewData["Title"] = "Lịch sử nghỉ phép";
@@ -7,37 +8,40 @@
 {
     <div class="alert alert-success">@TempData["Message"]</div>
 }
-@using (Html.BeginForm("Index", "ListDonDuyet", FormMethod.Get, new { @class = "row mb-3" }))
-{
-    <div class="col-md-3">
-        <label for="status" class="form-label">Trạng thái:</label>
-        @Html.DropDownList("status", new SelectList(new[] { "Tất cả", "Approved", "Rejected" }, "Tất cả"),
-                "Tất cả", new { @class = "form-select" })
-    </div>
-    <div class="col-md-3">
-        <label for="fromDate" class="form-label">Từ ngày:</label>
-        <input type="date" id="fromDate" name="fromDate" class="form-control" />
-    </div>
-    <div class="col-md-3">
-        <label for="toDate" class="form-label">Đến ngày:</label>
-        <input type="date" id="toDate" name="toDate" class="form-control" />
-    </div>
-   
-    <div class="col-md-3 mt-3">
-        <button type="submit" class="btn btn-primary w-100">Lọc</button>
-    </div>
-}
-@using (Html.BeginForm("Index", "ListDonDuyet", FormMethod.Get, new { @class = "mb-3 row" }))
-{
-    <div class="col-md-9">
-        <label for="searchString" class="form-label">Tìm kiếm:</label>
-        @Html.TextBox("searchString", ViewBag.SearchString as string,
-                new { @class = "form-control", @id = "searchString", placeholder = "Nhập mã đơn/Lý do" })
-    </div>
-    <div class="col-md-3 d-flex align-items-end">
-        <button type="submit" class="btn btn-secondary w-100">Tìm kiếm</button>
-    </div>
-}
+
+<div class="content-container">
+
+    @using (Html.BeginForm("Index", "ListDonDuyet", FormMethod.Get, new { @class = "row mb-3" }))
+    {
+        <div class="col-md-3">
+            <label for="status" class="form-label">Trạng thái:</label>
+            @Html.DropDownList("status", new SelectList(new[] { "Tất cả", "Approved", "Rejected" }, "Tất cả"),
+                     "Tất cả", new { @class = "form-select" })
+        </div>
+        <div class="col-md-3">
+            <label for="fromDate" class="form-label">Từ ngày:</label>
+            <input type="date" id="fromDate" name="fromDate" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label for="toDate" class="form-label">Đến ngày:</label>
+            <input type="date" id="toDate" name="toDate" class="form-control" />
+        </div>
+
+        <div class="col-md-3 mt-3">
+            <button type="submit" class="btn btn-primary w-100">Lọc</button>
+        </div>
+    }
+    @using (Html.BeginForm("Index", "ListDonDuyet", FormMethod.Get, new { @class = "mb-3 row" }))
+    {
+        <div class="col-md-9">
+            <label for="searchString" class="form-label">Tìm kiếm:</label>
+            @Html.TextBox("searchString", ViewBag.SearchString as string,
+                     new { @class = "form-control", @id = "searchString", placeholder = "Nhập mã đơn/Lý do" })
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-secondary w-100">Tìm kiếm</button>
+        </div>
+    }
 
     <table class="table table-bordered table-hover">
         <thead>
@@ -49,7 +53,7 @@
                 <th>Lý do</th>
                 <th>Tên nhân viên</th>
                 <th>Ngày xử lý</th>
-                
+
                 <th>Hành động</th>
             </tr>
         </thead>
@@ -64,7 +68,7 @@
                     <td>@item.LyDo</td>
                     <td>@item.TenNhanVien</td>
                     <td>@(item.NgayXuLy.HasValue ? item.NgayXuLy.Value.ToString("dd/MM/yyyy") : "-")</td>
-                <td>
+                    <td>
 
                         <a class="btn btn-info btn-sm" asp-action="ChiTiet" asp-controller="ListDonDuyet" asp-route-maDon="@item.MaDon">Chi tiết</a>
                     </td>
@@ -72,4 +76,8 @@
             }
         </tbody>
     </table>
+    <div class="pagination-container">
+        <partial name="_PagingPartial" model="new PagingViewModel { CurrentPage = ViewBag.CurrentPage, TotalPages = ViewBag.TotalPages, Action = ViewBag.Action, Filter = ViewBag.Strfilter }" />
+    </div>
 </div>
+

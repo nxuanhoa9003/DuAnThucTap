@@ -146,7 +146,7 @@ namespace Web_DonNghiPhep.Controllers
 
         // GET: Users
         [HttpGet("")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? page = 1)
         {
             var listuser = _context.User
                 .Include(u => u.UserRoles)
@@ -170,7 +170,17 @@ namespace Web_DonNghiPhep.Controllers
                 created_at = x.created_at,
                 updated_at = x.updated_at,
             }).ToListAsync();
-            return View(listus);
+
+
+            int pageSize = 5;
+            int totalItems = listus.Count;
+
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var listusrs = listus.Skip((page.Value - 1) * pageSize).Take(pageSize);
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            return View(listusrs.ToList());
         }
 
         // GET: Users/Details/5
@@ -584,8 +594,7 @@ namespace Web_DonNghiPhep.Controllers
                 {
                     _messageService.SetMessage("Không thể xoá tài khoản này", "warning");
                     return View(user);
-                    _context.User.Remove(user);
-                    _context.Employee.Remove(employee);
+                  
                 }
             }
 
