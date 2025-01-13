@@ -293,10 +293,10 @@ namespace Web_DonNghiPhep.Controllers
 
         [Authorize(Roles = "quản lý")]
         [HttpGet]
-        public async Task<ActionResult> ApproveRequests()
+        public async Task<ActionResult> ApproveRequests(int? page = 1)
         {
             var employeeid = User.FindFirst("Employeeid")?.Value;
-            var listrequests = _context.LeaveRequest
+            var listrequests = await _context.LeaveRequest
                 .Include(x => x.Employee)
                     .ThenInclude(x => x.LeaveBalances)
                 .Include(x => x.Employee)
@@ -315,10 +315,21 @@ namespace Web_DonNghiPhep.Controllers
                     TotalDayOff = (x.EndDate - x.StartDate).Days + 1,
                     NextApproverId = x.NextApproverId,
 
-                });
+                }).ToListAsync();
 
 
-            return View(await listrequests.ToListAsync());
+            int pageSize = 5;
+            int totalItems = listrequests.Count;
+
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var listrequetsrs = listrequests.Skip((page.Value - 1) * pageSize).Take(pageSize);
+
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.Action = "ApproveRequests";
+            return View(listrequetsrs.ToList());
         }
 
         [Authorize(Roles = "quản lý")]

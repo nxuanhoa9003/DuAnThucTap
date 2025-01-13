@@ -1,0 +1,23 @@
+﻿.text-ellipsis {
+    display: inline-block;
+    max-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.content-container {
+    display: flex;
+    flex-direction: column;
+    height: 80vh; /* Chiều cao đầy đủ của trang */
+}
+
+.table-container {
+    flex-grow: 1; /* Bảng chiếm hết không gian còn lại */
+    overflow-y: auto; /* Cho phép cuộn nếu dữ liệu quá dài */
+}
+
+.pagination-container {
+    margin-top: 20px;
+    text-align: center;
+}

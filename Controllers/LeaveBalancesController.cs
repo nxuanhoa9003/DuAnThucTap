@@ -26,7 +26,7 @@ namespace Web_DonNghiPhep.Controllers
         }
 
         // GET: LeaveBalances
-        public async Task<IActionResult> Index(int? yearselect)
+        public async Task<IActionResult> Index(int? yearselect, int? page = 1)
         {
 
             var currentYear = DateTime.Now.Year;
@@ -36,7 +36,7 @@ namespace Web_DonNghiPhep.Controllers
             ViewBag.SelectedYear = yearselect;
 
             var employeeid = User.FindFirst("Employeeid")?.Value;
-            var department = _context.Department.Include(x => x.Parent).SingleOrDefault(x => x.ManagerId == employeeid);
+            var department = await _context.Department.Include(x => x.Parent).SingleOrDefaultAsync(x => x.ManagerId == employeeid);
 
             if (department != null)
             {
@@ -56,12 +56,31 @@ namespace Web_DonNghiPhep.Controllers
                     listleave = _context.LeaveBalance.Include(l => l.Employee).Where(x => listidmanager.Contains(x.Employee_id));
 
                 }
-
+                List<string> listfilter = new List<string>();
                 if (yearselect != null)
                 {
                     listleave = listleave.Where(x => x.Year == yearselect);
+                    listfilter.Add("yearselect=" + yearselect);
                 }
-                return View(await listleave.ToListAsync());
+
+                var listLeaves = listleave.ToList();
+                int pageSize = 5;
+                int totalItems = listLeaves.Count;
+
+                int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+                var listrequetsrs = listLeaves.Skip((page.Value - 1) * pageSize).Take(pageSize);
+
+                if (listfilter.Count > 0)
+                {
+                    string strfilter = string.Join("&", listfilter);
+                    ViewBag.Strfilter = strfilter;
+                }
+
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+
+                return View(listrequetsrs.ToList());
             }
             return View(null);
         }
@@ -95,11 +114,11 @@ namespace Web_DonNghiPhep.Controllers
 
             var employeeid = User.FindFirst("Employeeid")?.Value;
             var department = _context.Department.Include(x => x.Parent).SingleOrDefault(x => x.ManagerId == employeeid);
-            if(department == null) return NotFound();
+            if (department == null) return NotFound();
             var listempde = _context.Employee.Include(x => x.DepartmentEmployees)
-                .Where(x => x.DepartmentEmployees.Any(z => z.DepartmentId == department.Department_id &&  z.EmployeeId != employeeid));
-                
-                
+                .Where(x => x.DepartmentEmployees.Any(z => z.DepartmentId == department.Department_id && z.EmployeeId != employeeid));
+
+
             if (department.Parent == null)
             {
                 var listidmanager = _context.Department.Include(x => x.Parent)
@@ -107,7 +126,7 @@ namespace Web_DonNghiPhep.Controllers
                     .Select(x => x.ManagerId).ToList();
                 listempde = _context.Employee
                     .Where(x => listidmanager.Contains(x.Employee_ID));
-                    
+
 
             }
             ViewData["Employee_id"] = new SelectList(listempde, "Employee_ID", "FullName");
@@ -184,7 +203,8 @@ namespace Web_DonNghiPhep.Controllers
                     {
                         Employee_id = emid,
                         Year = leaveBalance.Year,
-                        TotalDays = leaveBalance.TotalDays
+                        TotalDays = leaveBalance.TotalDays,
+                        RemainingDays = leaveBalance.TotalDays, 
                     };
                     _context.Add(newLeaveBalance);
                 }
@@ -257,7 +277,7 @@ namespace Web_DonNghiPhep.Controllers
 
             if (ModelState.IsValid)
             {
-               
+
                 try
                 {
 

@@ -1,44 +1,50 @@
-﻿@model IEnumerable<Web_DonNghiPhep.ViewModels.LeaveRequestVM>
+﻿@using Web_DonNghiPhep.ViewModels
+@model IEnumerable<Web_DonNghiPhep.ViewModels.LeaveRequestVM>
 
 @{
     ViewData["Title"] = "ApproveRequests";
 }
-<div class="container mt-5">
+<div class="content-container">
     <h4>Duyệt đơn nghỉ phép</h4>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Mã nhân viên</th>
-                <th>Nhân viên</th>
-                <th>Phòng ban</th>
-                <th class="text-center">Số ngày nghỉ</th>
-                <th>Lý do</th>
-                <th class="text-center">Trạng thái</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
+    <div class="table-container">
+        <table class="table table-bordered">
+            <thead>
                 <tr>
-                    <td>@Html.DisplayFor(modelItem => item.Employee_id)</td>
-                    <td>@Html.DisplayFor(modelItem => item.Employee_Name)</td>
-                    <td>@Html.DisplayFor(modelItem => item.DepartmentName)</td>
-                    <td class="text-center">
-                        @Html.DisplayFor(modelItem => item.TotalDayOff)
-
-                    </td>
-                    <td>@Html.DisplayFor(modelItem => item.Reason)</td>
-                    <td class="text-center">
-                        <p class="badge bg-warning">
-                            @Html.DisplayFor(modelItem => item.Status)
-                        </p>
-                    </td>
-                    <td class="text-center">
-                        <a class="btn btn-info" asp-action="DetailsRequest" asp-route-id="@item.Id">Xem chi tiết</a>
-                    </td>
+                    <th>Mã nhân viên</th>
+                    <th>Nhân viên</th>
+                    <th>Phòng ban</th>
+                    <th class="text-center">Số ngày nghỉ</th>
+                    <th>Lý do</th>
+                    <th class="text-center">Trạng thái</th>
+                    <th></th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@Html.DisplayFor(modelItem => item.Employee_id)</td>
+                        <td>@Html.DisplayFor(modelItem => item.Employee_Name)</td>
+                        <td>@Html.DisplayFor(modelItem => item.DepartmentName)</td>
+                        <td class="text-center">
+                            @Html.DisplayFor(modelItem => item.TotalDayOff)
+
+                        </td>
+                        <td>@Html.DisplayFor(modelItem => item.Reason)</td>
+                        <td class="text-center">
+                            <p class="badge bg-warning">
+                                @Html.DisplayFor(modelItem => item.Status)
+                            </p>
+                        </td>
+                        <td class="text-center">
+                            <a class="btn btn-info" asp-action="DetailsRequest" asp-route-id="@item.Id">Xem chi tiết</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="pagination-container">
+        <partial name="_PagingPartial" model="new PagingViewModel { CurrentPage = ViewBag.CurrentPage, TotalPages = ViewBag.TotalPages, Action = ViewBag.Action }" />
+    </div>
 </div>

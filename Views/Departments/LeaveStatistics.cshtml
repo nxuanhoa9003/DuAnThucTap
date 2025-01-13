@@ -1,16 +1,32 @@
-﻿
+﻿@model IEnumerable<Web_DonNghiPhep.ViewModels.LeaveStatisticsViewModel>
 
 <h2>Thống kê ngày nghỉ của nhân viên</h2>
 
-<form method="get">
-    <label for="departmentFilter">Lọc theo phòng ban:</label>
-    <select id="departmentFilter" name="departmentId">
-        <option value="">Chọn phòng ban</option>
-        <option value="1">Phòng Nhân sự</option>
-        <option value="2">Phòng Kỹ thuật</option>
-        <option value="3">Phòng Kinh doanh</option>
-    </select>
-    <button type="submit" class="btn btn-primary">Lọc</button>
+<form asp-action="LeaveStatistics" asp-controller="Departments" method="get">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="d-flex gap-3">
+                <label style="width: 100px" for="Year">Năm:</label>
+                <select name="yearselect" asp-items="@(new SelectList(ViewBag.Years, ViewBag.SelectedYear))" class="form-select form-select-sm">
+                    <option value="">-- Chọn năm --</option>
+                </select>
+            </div>
+            
+        </div>
+
+        <div class="col-md-4">
+            <div class="d-flex gap-3">
+                <label style="width: 150px" for="departmentFilter">Phòng ban:</label>
+                <select id="departmentFilter" name="departmentId" asp-items="ViewBag.Department" class="form-select form-select-sm">
+                    <option value="">Chọn phòng ban</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary">Lọc</button>
+
+        </div>
+    </div>
 </form>
 
 <table class="table">
@@ -23,24 +39,23 @@
             <th>Số ngày nghỉ phép còn lại</th>
             <th>Số ngày nghỉ phép đã dùng</th>
         </tr>
+    </thead>
+
     <tbody>
-        </thead>
-        <tr>
-            <td>1</td>
-            <td>NV001</td>
-            <td>Nguyễn Văn A</td>
-            <td>Nhân sự</td>
-            <td>10</td>
-            <td>5</td>
-        </tr>
-        <tr>
-            <td>2</td>
-            <td>NV002</td>
-            <td>Trần Thị B</td>
-            <td>Kỹ thuật</td>
-            <td>8</td>
-            <td>7</td>
-        </tr>
+        @{
+            int stt = 0;
+        }
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@(++stt)</td>
+                <td>@Html.DisplayFor(modelItem => item.EmployeeId)</td>
+                <td>@Html.DisplayFor(modelItem => item.EmployeeName)</td>
+                <td>@Html.DisplayFor(modelItem => item.DepartmentName)</td>
+                <td>@Html.DisplayFor(modelItem => item.RemainingLeaveDays)</td>
+                <td>@Html.DisplayFor(modelItem => item.UsedLeaveDays)</td>
+            </tr>
+        }
     </tbody>
 </table>
 
