@@ -1,65 +1,70 @@
-﻿@model IEnumerable<Web_DonNghiPhep.ViewModels.LeaveStatisticsViewModel>
+﻿@using Web_DonNghiPhep.ViewModels
+@model IEnumerable<Web_DonNghiPhep.ViewModels.LeaveStatisticsViewModel>
 
 <h2>Thống kê ngày nghỉ của nhân viên</h2>
 
-<form asp-action="LeaveStatistics" asp-controller="Departments" method="get">
-    <div class="row">
-        <div class="col-md-4">
-            <div class="d-flex gap-3">
-                <label style="width: 100px" for="Year">Năm:</label>
-                <select name="yearselect" asp-items="@(new SelectList(ViewBag.Years, ViewBag.SelectedYear))" class="form-select form-select-sm">
-                    <option value="">-- Chọn năm --</option>
-                </select>
-            </div>
-            
-        </div>
+<div class="content-container">
+    <form asp-action="LeaveStatistics" asp-controller="Departments" method="get">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="d-flex gap-3">
+                    <label style="width: 100px" for="Year">Năm:</label>
+                    <select name="yearselect" asp-items="@(new SelectList(ViewBag.Years, ViewBag.SelectedYear))" class="form-select form-select-sm">
+                        <option value="">-- Chọn năm --</option>
+                    </select>
+                </div>
 
-        <div class="col-md-4">
-            <div class="d-flex gap-3">
-                <label style="width: 150px" for="departmentFilter">Phòng ban:</label>
-                <select id="departmentFilter" name="departmentId" asp-items="ViewBag.Department" class="form-select form-select-sm">
-                    <option value="">Chọn phòng ban</option>
-                </select>
+            </div>
+
+            <div class="col-md-4">
+                <div class="d-flex gap-3">
+                    <label style="width: 150px" for="departmentFilter">Phòng ban:</label>
+                    <select id="departmentFilter" name="departmentId" asp-items="ViewBag.Department" class="form-select form-select-sm">
+                        <option value="">Chọn phòng ban</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary">Lọc</button>
+
             </div>
         </div>
-        <div class="col-md-4">
-            <button type="submit" class="btn btn-primary">Lọc</button>
+    </form>
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Mã nhân viên</th>
+                    <th>Tên nhân viên</th>
+                    <th>Phòng ban</th>
+                    <th>Số ngày nghỉ phép còn lại</th>
+                    <th>Số ngày nghỉ phép đã dùng</th>
+                </tr>
+            </thead>
 
-        </div>
+            <tbody>
+                @{
+                    int stt = ViewBag.CurrentPage;
+                }
+                @if (Model != null)
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@(stt++)</td>
+                            <td>@Html.DisplayFor(modelItem => item.EmployeeId)</td>
+                            <td>@Html.DisplayFor(modelItem => item.EmployeeName)</td>
+                            <td>@Html.DisplayFor(modelItem => item.DepartmentName)</td>
+                            <td>@Html.DisplayFor(modelItem => item.RemainingLeaveDays)</td>
+                            <td>@Html.DisplayFor(modelItem => item.UsedLeaveDays)</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
     </div>
-</form>
-
-<table class="table">
-    <thead>
-        <tr>
-            <th>STT</th>
-            <th>Mã nhân viên</th>
-            <th>Tên nhân viên</th>
-            <th>Phòng ban</th>
-            <th>Số ngày nghỉ phép còn lại</th>
-            <th>Số ngày nghỉ phép đã dùng</th>
-        </tr>
-    </thead>
-
-    <tbody>
-        @{
-            int stt = 0;
-        }
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@(++stt)</td>
-                <td>@Html.DisplayFor(modelItem => item.EmployeeId)</td>
-                <td>@Html.DisplayFor(modelItem => item.EmployeeName)</td>
-                <td>@Html.DisplayFor(modelItem => item.DepartmentName)</td>
-                <td>@Html.DisplayFor(modelItem => item.RemainingLeaveDays)</td>
-                <td>@Html.DisplayFor(modelItem => item.UsedLeaveDays)</td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-<div>
-    <button type="button" class="btn btn-primary">Xuất Excel</button>
-    <button type="button" class="btn btn-danger">Xuất PDF</button>
+    <div class="pagination-container">
+        <partial name="_PagingPartial" model="new PagingViewModel { CurrentPage = ViewBag.CurrentPage, TotalPages = ViewBag.TotalPages, Action = ViewBag.Action, Filter = ViewBag.Strfilter }" />
+    </div>
 </div>

@@ -314,7 +314,8 @@ namespace Web_DonNghiPhep.Controllers
         {
             return _context.Department.Any(e => e.Department_id == id);
         }
-        public async Task<IActionResult> LeaveStatistics(int? yearselect, string? departmentId)
+
+        public async Task<IActionResult> LeaveStatistics(int? yearselect, string? departmentId, int? page = 1)
         {
 
             var currentYear = DateTime.Now.Year;
@@ -337,12 +338,38 @@ namespace Web_DonNghiPhep.Controllers
                 })
                 .ToListAsync();
 
+            List<string> listfilter = new List<string>();
+            listfilter.Add("yearselect=" + yearselect);
+            if (departmentId != null)
+            {
+                listfilter.Add("departmentId=" + departmentId);
+            }
+
+            string strfilter = string.Join("&", listfilter);
+            ViewBag.Strfilter = strfilter;
+
+
+
+            int pageSize = 5;
+            int totalItems = listleavebance.Count;
+
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            var listleavebancers = listleavebance.Skip((page.Value - 1) * pageSize).Take(pageSize);
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.Action = "LeaveStatistics";
 
             ViewBag.Years = years;
             ViewBag.CurrentYear = currentYear;
             ViewBag.SelectedYear = yearselect;
             ViewBag.Department = new SelectList(await _context.Department.ToListAsync(), "Department_id", "DepartmentName", departmentId);
-            return View(listleavebance);
+
+            if (listleavebance.Count == 0 && departmentId != null)
+            {
+                _messageService.SetMessage("Không có dữ liệu", "error");
+            }
+            return View(listleavebancers);
         }
     }
 }
